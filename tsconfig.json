@@ -4,20 +4,22 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "Node",
+    "jsx": "react-jsx",
+    "jsxImportSource": "~src/service",
     "experimentalDecorators": true,
     "pretty": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
     "forceConsistentCasingInFileNames": true,
     "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "skipLibCheck": true,
     "esModuleInterop": true,
     // "exactOptionalPropertyTypes": true,
-    "baseUrl": ".",
     "paths": {
-      "~lib/*": ["lib/*"],
-      "~src/*": ["src/*"]
+      "~lib/*": ["./lib/*"],
+      "~src/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*", "lib/**/*", "eslint.config.ts"]
+  "include": ["index.ts", "services/**/*", "lib/**/*", "eslint.config.ts"]
 }

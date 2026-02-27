@@ -14,7 +14,7 @@ export function _mount({
   target,
   type = "bind",
   bindOptions,
-  readOnly = false,
+  readOnly,
   kind = "directory",
 }: Optional<MountOpts, "target" | "type">): MountOpts {
   if (!source) {
@@ -38,8 +38,7 @@ export function _mount({
 }
 
 type OldMountOpts = Unwrap<
-  MountOpts["bindOptions"] &
-    CustomMountOpts & { readOnly: MountOpts["readOnly"] }
+  MountOpts["bindOptions"] & CustomMountOpts & Pick<MountOpts, "readOnly">
 >;
 
 export const mount = (
@@ -59,24 +58,41 @@ export const mount = (
   });
 };
 
-export const gitMount = _mount({ source: "/home/bas/git" });
+export const gitMount = (hostSubdir: string = "", containerDir?: string) =>
+  _mount({ source: `/home/bas/git/${hostSubdir}`, target: containerDir });
 
-export const ssdcacheMount = (source: string = "", target?: string) =>
-  _mount({ source: `/home/bas/data/ssdcache/${source}`, target });
+export const dataMount = (hostSubdir: string = "", containerDir?: string) =>
+  _mount({ source: `/home/bas/data/${hostSubdir}`, target: containerDir });
 
-export const dataMount = (source: string = "", target?: string) =>
-  _mount({ source: `/home/bas/data/${source}`, target });
+export const ssdcacheMount = (hostSubdir: string = "", containerDir?: string) =>
+  dataMount(`ssdcache/${hostSubdir}`, containerDir);
 
-export const confMount = (source: string = "", target?: string) =>
-  _mount({ source: `/home/bas/docker/${source}`, target: target ?? "/config" });
+export const kaneelnasMount = (hostSubdir: string = "", containerDir?: string) =>
+  dataMount(`kaneelnas/${hostSubdir}`, containerDir);
 
-export const nvmeMount = (source: string = "", target?: string) =>
-  _mount({ source: `/mnt/nvme1/${source}`, target });
+export const confMount = (
+  hostSubdir: string,
+  containerDir: string = "/config",
+  opts?: CustomMountOpts,
+) =>
+  _mount({
+    source: `/home/bas/docker/${hostSubdir}`,
+    target: containerDir,
+    ...opts,
+  });
+
+export const nvmeMount = (hostSubdir: string = "", target?: string) =>
+  _mount({ source: `/mnt/nvme1/${hostSubdir}`, target });
 
 export const dockerSocket = _mount({
   source: "/var/run/docker.sock",
   kind: "file",
   readOnly: true,
+});
+
+export const dockerSocketRw = _mount({
+  source: "/var/run/docker.sock",
+  kind: "file",
 });
 
 export const resolvConf = _mount({

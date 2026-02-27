@@ -2,60 +2,60 @@ import command from "@pulumi/command";
 import type { input } from "@pulumi/command/types";
 import docker from "@pulumi/docker";
 import type { Input, Output } from "@pulumi/pulumi";
-import pulumi, { interpolate } from "@pulumi/pulumi";
+import pulumi, { all, output } from "@pulumi/pulumi";
 import path from "path";
-import { network } from "./networks";
+import { defaultNetwork } from "./networks";
 import { convertLabels, convertEnvs } from "./util";
 import { convertPorts } from "./ports";
 import { getEnv } from "~lib/env";
 import { haringDockerProvider } from "./providers";
 import { MountOpts } from "./mounts";
 
-const defaultConnection = {
+export const defaultConnection = {
   host: getEnv("CONNECTION_HOST"),
   user: getEnv("CONNECTION_USER"),
+  port: Number(getEnv("CONNECTION_PORT")),
   // password: getEnv("CONNECTION.PASSWORD"),
 } satisfies input.remote.ConnectionArgs;
 
 type Env = string | number | boolean;
 
 export type ContainerServiceArgs = Partial<
-  Omit<
-    docker.ContainerArgs,
-    "ports" | "labels" | "mounts" | "envs" | "capabilities"
-  > & {
+  Omit<docker.ContainerArgs, "ports" | "labels" | "mounts" | "envs" | "capabilities"> & {
     enabled: boolean;
+    localImage: Input<string>;
     disabled: boolean;
     servicePort: number;
     subdomain: string;
     hostRule: string;
+    hostRulePriority: number;
     ports: Input<Input<number | string | docker.types.input.ContainerPort>[]>;
     middlewares: string[];
     otherServicePorts: Record<string, number>;
-    labels: Record<string, string>;
+    labels: Input<Record<string, Input<string | number | undefined>> | undefined>;
     mounts: MountOpts[];
     envs: Input<Record<string, Input<Env | Env[]>>>;
     capabilities: string[] | { adds?: string[]; drops?: string[] };
     internalHttps: boolean;
     dontUpdateIf: () => boolean;
     commandConnection: input.remote.ConnectionArgs;
+    monitor: boolean;
   }
 >;
+
+export class ServiceDef {}
 
 // TODO: turn ContainerService into a factory function like https://sst.dev/docs/examples/#api-gateway-auth
 class ContainerService extends pulumi.ComponentResource {
   public readonly container: docker.Container | undefined;
-  public readonly localUrl: string | undefined;
+  public readonly localUrl: Output<string> | undefined;
   public readonly remoteUrl: string | undefined;
-  public readonly ip: Output<string | undefined>;
+  public readonly ip: Output<string | undefined> | undefined;
   public readonly enabled: boolean;
   private readonly commandConnection: input.remote.ConnectionArgs;
+  private readonly dependsOn: Input<pulumi.Resource>[] = [];
 
-  constructor(
-    name: string,
-    _args: ContainerServiceArgs,
-    opts?: pulumi.ComponentResourceOptions,
-  ) {
+  constructor(name: string, _args: ContainerServiceArgs, opts?: pulumi.CustomResourceOptions) {
     super("bas:docker:ContainerService", name, _args, opts);
 
     const args = {
@@ -77,80 +77,83 @@ class ContainerService extends pulumi.ComponentResource {
 
     if (!args.enabled || args.disabled) {
       this.enabled = false;
-      this.ip = pulumi.output(undefined);
       return;
     }
 
-    const mounts = pulumi.output(args.mounts).apply((mounts) => {
+    if (opts?.dependsOn) {
+      this.dependsOn.push(...(Array.isArray(opts.dependsOn) ? opts.dependsOn : []));
+    }
+
+    const mounts = output(args.mounts).apply((mounts) => {
       let i = 0;
       for (const mount of mounts) {
         if (mount.type === "bind" && mount.source) {
-          const dir =
-            mount.kind === "file" ? path.dirname(mount.source) : mount.source;
-          this.createRemoteDir(dir, name, i);
+          const dir = mount.kind === "file" ? path.dirname(mount.source) : mount.source;
+          this.dependsOn.push(this.createRemoteDir(dir, name, i));
           i++;
         }
 
         delete mount.kind;
       }
 
-      // mounts.push({
-      //   type: "bind",
-      //   source: "/run/systemd/resolve/stub-resolv.conf",
-      //   target: "/etc/resolv.conf",
-      //   readOnly: true,
-      // });
-
       return mounts;
     });
 
-    const imageManifest = docker.getRegistryImageOutput(
-      { name: args.image ?? `lscr.io/linuxserver/${name}` },
-      { parent: this },
-    );
+    const image =
+      args.localImage ??
+      output(args.image).apply(async (image) =>
+        docker
+          .getRegistryImage({ name: image ?? `lscr.io/linuxserver/${name}` }, { parent: this })
+          .then((registryImage) => `${registryImage.name}@${registryImage.sha256Digest}`),
+      );
 
-    const image = new docker.RemoteImage(
-      `${name}`,
-      {
-        name: interpolate`${imageManifest.name}@${imageManifest.sha256Digest}`,
-        keepLocally: true,
-      },
-      { parent: this },
-    );
+    // image = new docker.RemoteImage(
+    //   `${name}`,
+    //   {
+    //     name: imageRef,
+    //     keepLocally: true,
+    //   },
+    //   { parent: this },
+    // ).repoDigest;
 
-    function createLabels(host: string, port: string) {
-      const subdomain = host.replace(".bas.sh", "");
-      const id =
-        name +
-        (subdomain !== args.subdomain && subdomain !== name
-          ? "-" + subdomain.replaceAll(/\.|\//g, "-")
-          : "");
+    function createLabels(host: string, port: string, priority?: number) {
+      const id = host.replaceAll(/[^\w]+/g, "-");
 
       return {
         "traefik.enable": "true",
         [`traefik.http.services.${id}.loadbalancer.server.port`]: port,
         [`traefik.http.routers.${id}.service`]: id,
-        [`traefik.http.routers.${id}.rule`]: `Host(\`${host}\`)`,
+        [`traefik.http.routers.${id}.rule`]:
+          host.includes("/") || host.includes("(") ? host : `Host(\`${host}\`)`,
         [`traefik.http.routers.${id}.entrypoints`]: "https",
-        [`traefik.http.routers.${id}.middlewares`]: [
-          "cloudflare",
-          ...args.middlewares,
-        ].join(","),
+        [`traefik.http.routers.${id}.middlewares`]: ["cloudflare", ...args.middlewares].join(","),
+        ...(priority && {
+          [`traefik.http.routers.${id}.priority`]: priority,
+        }),
         ...(port === "443" && {
           [`traefik.http.services.${id}.loadbalancer.server.scheme`]: "https",
+        }),
+        ...(args.monitor && {
+          [`kuma.${id}.http.name`]: name,
+          [`kuma.${id}.http.url`]: `http://${name}:${port}`,
         }),
       };
     }
 
-    let labels = {};
+    let labels: Record<string, string | number> = {};
     if (args.servicePort) {
-      this.localUrl = `http://${args.networkMode === "host" ? "host.docker.internal" : name}:${args.servicePort}`;
+      this.localUrl = all([args.networkMode, args.servicePort]).apply(
+        ([networkMode, servicePort]) =>
+          networkMode === "host" || networkMode?.startsWith("container:")
+            ? `http://host.docker.internal:${servicePort}`
+            : `http://${name}:${servicePort}`,
+      );
       const host = args.hostRule ?? `${args.subdomain ?? name}.bas.sh`;
       this.remoteUrl = `https://${host}`;
 
       labels = {
         ...labels,
-        ...createLabels(host, args.servicePort.toString()),
+        ...createLabels(host, args.servicePort.toString(), args.hostRulePriority),
       };
     }
 
@@ -170,30 +173,23 @@ class ContainerService extends pulumi.ComponentResource {
       };
     }
 
-    labels = {
+    const allLabels = output(args.labels).apply((inputLabels) => ({
       ...labels,
-      ...args.labels,
-    };
+      ...inputLabels,
+    }));
 
-    const envs = {
+    args.envs = output(args.envs).apply((envs) => ({
       PUID: `${getEnv("PUID")}`,
       PGID: `${getEnv("PGID")}`,
       TZ: `${getEnv("TZ")}`,
-      ...args.envs,
-    };
-
-    const ports = convertPorts(args.ports);
-
-    // pulumi.output(ports).apply((ports) => {
-    //   if (name === "minecraft-akio") console.dir(ports, { depth: null });
-    // });
+      ...envs,
+    }));
 
     const capabilities = Array.isArray(args.capabilities)
       ? { adds: args.capabilities }
       : args.capabilities;
 
-    const ensureCapPrefix = (cap: string) =>
-      cap.startsWith("CAP_") ? cap : `CAP_${cap}`;
+    const ensureCapPrefix = (cap: string) => (cap.startsWith("CAP_") ? cap : `CAP_${cap}`);
 
     if (capabilities) {
       capabilities.adds &&= capabilities.adds.map(ensureCapPrefix);
@@ -204,15 +200,16 @@ class ContainerService extends pulumi.ComponentResource {
       name,
       {
         ...args,
-        image: image.imageId,
-        name: args.name ?? name,
+        image,
+        ...(opts?.deleteBeforeReplace !== false && { name: args.name ?? name }),
         command: args.command,
-        restart: "always",
-        labels: convertLabels(labels),
-        envs: convertEnvs(envs),
-        ports,
+        restart: args.restart ?? "unless-stopped",
+        labels: allLabels.apply(convertLabels),
+        envs: convertEnvs(args.envs),
+        ports: convertPorts(args.ports),
         mounts,
         volumes: args.volumes,
+        logDriver: "local",
         networkMode: args.networkMode ?? "bridge",
         // TODO: healthchecks
         // healthcheck: {tests}
@@ -220,18 +217,12 @@ class ContainerService extends pulumi.ComponentResource {
           ? []
           : pulumi
               .output(args.networksAdvanced)
-              .apply((networksAdvanced) => [
-                ...networksAdvanced,
-                { name: network.name },
-              ]),
+              .apply((networksAdvanced) => [...networksAdvanced, { name: defaultNetwork.name }]),
         hosts: args.networkMode
           ? []
           : pulumi
               .output(args.hosts)
-              .apply((hosts) => [
-                { host: "host.docker.internal", ip: "host-gateway" },
-                ...hosts,
-              ]),
+              .apply((hosts) => [{ host: "host.docker.internal", ip: "host-gateway" }, ...hosts]),
         capabilities,
       },
       {
@@ -239,12 +230,13 @@ class ContainerService extends pulumi.ComponentResource {
         deleteBeforeReplace: true,
         replaceOnChanges: ["mounts", "volumes"],
         ignoreChanges: opts?.ignoreChanges,
+        dependsOn: this.dependsOn,
         ...opts,
       },
     );
 
     this.ip = pulumi
-      .all([this.container.networkDatas, network.name])
+      .all([this.container.networkDatas, defaultNetwork.name])
       .apply(([networks, networkName]) => {
         const net = networks?.find((n) => n.networkName === networkName);
         return net?.ipAddress;
@@ -256,7 +248,7 @@ class ContainerService extends pulumi.ComponentResource {
   }
 
   private createRemoteDir(path: string, name: string, index: number) {
-    new command.remote.Command(
+    return new command.remote.Command(
       `mkdir-${name}-${index}`,
       {
         connection: this.commandConnection,
@@ -275,7 +267,7 @@ class ContainerService extends pulumi.ComponentResource {
       {
         parent: this,
         deleteBeforeReplace: true,
-        ignoreChanges: ["connection"],
+        // ignoreChanges: ["connection"],
       },
     );
   }
@@ -288,6 +280,7 @@ class ContainerService extends pulumi.ComponentResource {
       ...args,
       interpreter: [
         "/usr/bin/ssh",
+        `-p ${defaultConnection.port.toString()}`,
         `${defaultConnection.user}@${defaultConnection.host}`,
       ],
     } satisfies command.local.RunArgs;
