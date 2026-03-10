@@ -1,8 +1,8 @@
 import { DnsRecord } from "@pulumi/cloudflare";
 import { getEnv } from "~lib/env";
+import { fetchRelays } from "~lib/relay-hosts";
 import { confMount, ssdcacheMount } from "~lib/service/mounts";
 import { ContainerService } from "~lib/service/service";
-import { PDS_CRAWLERS } from "./pds";
 
 export const pegasusService = new ContainerService("pegasus", {
   image: "ghcr.io/futurgh/pegasus",
@@ -18,7 +18,7 @@ export const pegasusService = new ContainerService("pegasus", {
     PDS_ROTATION_KEY_MULTIBASE: getEnv("PEGASUS_ROTATION_KEY_MULTIBASE"),
     PDS_JWK_MULTIBASE: getEnv("PEGASUS_JWK_MULTIBASE"),
     PDS_DPOP_NONCE_SECRET: getEnv("PEGASUS_DPOP_NONCE_SECRET"),
-    PDS_CRAWLERS,
+    PDS_CRAWLERS: fetchRelays(),
   },
   labels: {
     "traefik.http.middlewares.pegasus-user-redirect.redirectregex.regex":

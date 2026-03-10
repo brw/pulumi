@@ -1,25 +1,8 @@
 import { DnsRecord } from "@pulumi/cloudflare";
 import { getEnv } from "~lib/env";
+import { fetchRelays } from "~lib/relay-hosts";
 import { confMount } from "~lib/service/mounts";
 import { ContainerService } from "~lib/service/service";
-
-export const PDS_CRAWLERS = [
-  "https://bsky.network",
-  "https://relay1.us-east.bsky.network",
-  "https://relay1.us-west.bsky.network",
-  "https://relay.upcloud.world",
-  "https://relay3.fr.hose.cam",
-  "https://relay.fire.hose.cam",
-  "https://relay.feeds.blue",
-  "https://atproto.africa",
-  "https://relay.hayescmd.net",
-  "https://relay.xero.systems",
-  "https://europe.firehose.network",
-  "https://northamerica.firehose.network",
-  "https://asia.firehose.network",
-  "https://relay.bas.sh",
-  "https://relay.t4tlabs.net",
-];
 
 export const pdsService = new ContainerService("pds", {
   image: "ghcr.io/bluesky-social/pds",
@@ -38,7 +21,7 @@ export const pdsService = new ContainerService("pds", {
     PDS_BSKY_APP_VIEW_DID: "did:web:api.bsky.app",
     PDS_REPORT_SERVICE_URL: "https://mod.bsky.app",
     PDS_REPORT_SERVICE_DID: "did:plc:ar7c4by46qjdydhdevvrndac",
-    PDS_CRAWLERS,
+    PDS_CRAWLERS: fetchRelays(),
     LOG_ENABLED: "true",
     PDS_EMAIL_SMTP_URL: getEnv("PDS_SMTP_AUTH_URI"),
     PDS_EMAIL_FROM_ADDRESS: "PDS <pds@bas.sh>",

@@ -5,7 +5,7 @@ import { ContainerService, defaultConnection } from "~lib/service/service";
 import dockerBuild from "@pulumi/docker-build";
 import { remote } from "@pulumi/command";
 import { getLatestCommit } from "~lib/service/util";
-import { PDS_CRAWLERS } from "./pds";
+import { fetchRelays } from "~lib/relay-hosts";
 
 const tranquilImage = new dockerBuild.Image(
   "tranquil-pds",
@@ -79,7 +79,7 @@ if (postgresTranquilService.container) {
       PDS_USER_HANDLE_DOMAINS: ["tranquil.bas.sh", "t.bas.sh", "on.bas.sh"],
       CONTACT_EMAIL: getEnv("EMAIL"),
       PDS_AGE_ASSURANCE_OVERRIDE: true,
-      CRAWLERS: PDS_CRAWLERS,
+      CRAWLERS: fetchRelays(),
     },
     labels: {
       "traefik.http.middlewares.tranquil-redirect.redirectregex.regex":
