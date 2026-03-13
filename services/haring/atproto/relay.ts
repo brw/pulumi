@@ -33,6 +33,7 @@ const relayImage = new dockerBuild.Image(
       },
     ],
     push: false,
+    buildOnPreview: false,
   },
   {
     // replacementTrigger: await getLatestCommit(

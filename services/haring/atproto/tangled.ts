@@ -23,6 +23,7 @@ const knotImage = new Image(
       },
     ],
     push: false,
+    buildOnPreview: false,
   },
   {
     replacementTrigger: await getLatestCommit(
@@ -72,6 +73,7 @@ const spindleImage = new Image(
       },
     ],
     push: false,
+    buildOnPreview: false,
   },
   {
     replacementTrigger: await getLatestCommit(

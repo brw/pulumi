@@ -6,6 +6,7 @@ import dockerBuild from "@pulumi/docker-build";
 import { remote } from "@pulumi/command";
 import { getLatestCommit } from "~lib/util";
 import { fetchRelays } from "~lib/relay-hosts";
+import path from "path";
 
 const tranquilImage = new dockerBuild.Image(
   "tranquil-pds",
@@ -23,6 +24,7 @@ const tranquilImage = new dockerBuild.Image(
       },
     ],
     push: false,
+    buildOnPreview: false,
   },
   {
     replacementTrigger: await getLatestCommit(
