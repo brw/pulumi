@@ -57,6 +57,7 @@ export const relayService = new ContainerService(
       DATABASE_URL: interpolate`postgres://postgres:${getEnv("POSTGRES_PASSWORD")}@${postgresRelayService.ip}/relay`,
       RELAY_PERSIST_DIR: "/data/relay/persist",
       RELAY_REPLAY_WINDOW: "24h",
+      RELAY_LENIENT_SYNC_VALIDATION: true,
       RELAY_TRUSTED_DOMAINS: [
         "*.host.bsky.network",
         "atproto.brid.gy",
