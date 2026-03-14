@@ -12,7 +12,7 @@ const valkeyUnboundService = new ContainerService("valkey-unbound", {
   image: "valkey/valkey",
   command: [
     interpolate`--requirepass ${getEnv("VALKEY_PASSWORD")}`,
-    "--save 300",
+    "--save 300 1",
     "--loglevel warning",
   ],
   volumes: [{ volumeName: "valkey-unbound", containerPath: "/data" }],
