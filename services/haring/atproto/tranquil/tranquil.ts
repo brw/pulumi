@@ -30,6 +30,9 @@ const tranquilImage = new dockerBuild.Image(
     replacementTrigger: await getLatestCommit(
       "https://tangled.org/tranquil.farm/tranquil-pds/commits/main",
     ),
+    customTimeouts: {
+      create: "30m",
+    },
   },
 );
 
