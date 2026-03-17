@@ -60,6 +60,7 @@ if (postgresTranquilService.container) {
   tranquilService = new ContainerService("tranquil", {
     localImage: tranquilImage.digest,
     servicePort: 3000,
+    hostRule: "HostRegexp(`^(.+?\\.)?(t(ranquil)|on)\\.bas\\.sh`)",
     mounts: [
       confMount("tranquil/backups", "/var/lib/tranquil/backups"),
       confMount("tranquil/blobs", "/var/lib/tranquil/blobs"),
@@ -98,7 +99,7 @@ if (postgresTranquilService.container) {
         "https://bsky.app/profile/${1}",
       "traefik.http.routers.tranquil-user-redirect.entrypoints": "https",
       "traefik.http.routers.tranquil-user-redirect.rule":
-        "HostRegexp(`^.+\\.(t(ranquil)?|on)\\.bas\\.sh$`)",
+        "HostRegexp(`^.+\\.(t(ranquil)?|on)\\.bas\\.sh$`) && !PathPrefix(`/.well-known`)",
       "traefik.http.routers.tranquil-user-redirect.middlewares":
         "cloudflare,tranquil-user-redirect",
     },
