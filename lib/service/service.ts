@@ -1,8 +1,6 @@
-import command from "@pulumi/command";
 import type { input } from "@pulumi/command/types";
-import docker from "@pulumi/docker";
-import type { Input, Output, Resource } from "@pulumi/pulumi";
-import pulumi, { all, output } from "@pulumi/pulumi";
+import type { CustomResourceOptions, Input, InvokeOptions, Output, Resource } from "@pulumi/pulumi";
+import { all, ComponentResource, output } from "@pulumi/pulumi";
 import path from "path";
 import { defaultNetwork } from "./networks";
 import { convertPorts } from "./ports";
@@ -10,6 +8,8 @@ import { getEnv } from "~lib/env";
 import { haringDockerProvider } from "./providers";
 import { MountOpts } from "./mounts";
 import { ContainerCapabilities, ContainerPort } from "@pulumi/docker/types/input";
+import { remote, local } from "@pulumi/command";
+import { Container, ContainerArgs, getRegistryImage, RemoteImage } from "@pulumi/docker";
 
 export const defaultConnection = {
   host: getEnv("CONNECTION_HOST"),
@@ -22,7 +22,7 @@ type Env = string | number | boolean;
 type Port = (number | string | ContainerPort)[];
 
 export type ContainerServiceArgs = Partial<
-  Omit<docker.ContainerArgs, "ports" | "labels" | "mounts" | "envs" | "capabilities"> & {
+  Omit<ContainerArgs, "ports" | "labels" | "mounts" | "envs" | "capabilities"> & {
     localImage: Input<string>;
     servicePort: Input<number>;
     subdomain: Input<string>;
@@ -42,18 +42,18 @@ export type ContainerServiceArgs = Partial<
 >;
 
 // TODO: turn ContainerService into a factory function like https://sst.dev/docs/examples/#api-gateway-auth
-class ContainerService extends pulumi.ComponentResource {
-  public readonly container: Output<docker.Container>;
+class ContainerService extends ComponentResource {
+  public readonly container: Output<Container>;
   public readonly localUrl: Output<string>;
   public readonly ip: Output<string>;
-  public readonly mounts: docker.Container["mounts"];
-  public readonly envs: docker.Container["envs"];
-  public readonly capabilities: docker.Container["capabilities"];
-  public readonly ports: docker.Container["ports"];
+  public readonly mounts: Container["mounts"];
+  public readonly envs: Container["envs"];
+  public readonly capabilities: Container["capabilities"];
+  public readonly ports: Container["ports"];
 
   private commandConnection: Input<input.remote.ConnectionArgs>;
 
-  constructor(name: string, args: ContainerServiceArgs, opts?: pulumi.CustomResourceOptions) {
+  constructor(name: string, args: ContainerServiceArgs, opts?: CustomResourceOptions) {
     super("bas:docker:ContainerService", name, args, opts);
 
     this.commandConnection = args.commandConnection ?? defaultConnection;
@@ -69,13 +69,13 @@ class ContainerService extends pulumi.ComponentResource {
 
     const image =
       args.localImage ??
-      new docker.RemoteImage(
+      new RemoteImage(
         `${name}`,
         {
           name: output(args.image ?? `lscr.io/linuxserver/${name}`).apply(async (image) =>
-            docker
-              .getRegistryImage({ name: image }, { parent: this })
-              .then((registryImage) => `${registryImage.name}@${registryImage.sha256Digest}`),
+            getRegistryImage({ name: image }, { parent: this }).then(
+              (registryImage) => `${registryImage.name}@${registryImage.sha256Digest}`,
+            ),
           ),
           keepLocally: true,
         },
@@ -201,7 +201,7 @@ class ContainerService extends pulumi.ComponentResource {
     this.capabilities = output(capabilities);
 
     this.container = output(
-      new docker.Container(
+      new Container(
         name,
         {
           ...args,
@@ -220,14 +220,16 @@ class ContainerService extends pulumi.ComponentResource {
           // healthcheck: {tests}
           networksAdvanced: args.networkMode
             ? []
-            : pulumi
-                .output(args.networksAdvanced ?? [])
-                .apply((networksAdvanced) => [...networksAdvanced, { name: defaultNetwork.name }]),
+            : output(args.networksAdvanced ?? []).apply((networksAdvanced) => [
+                ...networksAdvanced,
+                { name: defaultNetwork.name },
+              ]),
           hosts: args.networkMode
             ? []
-            : pulumi
-                .output(args.hosts ?? [])
-                .apply((hosts) => [{ host: "host.docker.internal", ip: "host-gateway" }, ...hosts]),
+            : output(args.hosts ?? []).apply((hosts) => [
+                { host: "host.docker.internal", ip: "host-gateway" },
+                ...hosts,
+              ]),
           capabilities,
         },
         {
@@ -241,9 +243,8 @@ class ContainerService extends pulumi.ComponentResource {
       ),
     );
 
-    this.ip = pulumi
-      .all([args.networkMode, this.container.networkDatas, defaultNetwork.name])
-      .apply(([networkMode, networks, haringNetwork]) => {
+    this.ip = all([args.networkMode, this.container.networkDatas, defaultNetwork.name]).apply(
+      ([networkMode, networks, haringNetwork]) => {
         if (networkMode === "host") {
           return "host.docker.internal";
         } else if (networkMode?.startsWith("container")) {
@@ -261,13 +262,14 @@ class ContainerService extends pulumi.ComponentResource {
         }
 
         return net.ipAddress;
-      });
+      },
+    );
 
     this.registerOutputs();
   }
 
   private createRemoteDir(path: string, name: string, index: number) {
-    return new command.remote.Command(
+    return new remote.Command(
       `mkdir-${name}-${index}`,
       {
         connection: this.commandConnection,
@@ -291,10 +293,7 @@ class ContainerService extends pulumi.ComponentResource {
     );
   }
 
-  static async remoteRun(
-    args: command.local.RunArgs,
-    opts?: pulumi.InvokeOptions,
-  ): Promise<command.local.RunResult> {
+  static async remoteRun(args: local.RunArgs, opts?: InvokeOptions): Promise<local.RunResult> {
     const newArgs = {
       ...args,
       interpreter: [
@@ -302,9 +301,9 @@ class ContainerService extends pulumi.ComponentResource {
         `-p ${defaultConnection.port}`,
         `${defaultConnection.user}@${defaultConnection.host}`,
       ],
-    } satisfies command.local.RunArgs;
+    } satisfies local.RunArgs;
 
-    return command.local.run(newArgs, {
+    return local.run(newArgs, {
       ...opts,
     });
   }

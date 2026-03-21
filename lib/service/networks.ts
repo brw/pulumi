@@ -1,7 +1,7 @@
-import docker from "@pulumi/docker";
+import { Network } from "@pulumi/docker";
 import { haringDockerProvider } from "./providers";
 
-export const defaultNetwork = new docker.Network(
+export const defaultNetwork = new Network(
   "haring",
   {
     name: "haring",

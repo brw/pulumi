@@ -1,8 +1,9 @@
 import { JSDOM } from "jsdom";
 import pMemoize from "p-memoize";
 
+const PULSAR = "https://pulsar.feeds.blue";
+
 export const fetchRelays = pMemoize(async () => {
-  const PULSAR = "https://pulsar.feeds.blue";
   const res = await fetch(PULSAR);
   if (!res.ok) {
     throw Error(`Error on fetching data from Pulsar: ${res.status}`);

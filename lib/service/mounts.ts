@@ -1,4 +1,4 @@
-import docker from "@pulumi/docker";
+import { ContainerMount } from "@pulumi/docker/types/input";
 import { Input, output, Unwrap } from "@pulumi/pulumi";
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
@@ -7,7 +7,7 @@ type CustomMountOpts = {
   kind?: Input<"directory" | "file">;
 };
 
-export type MountOpts = docker.types.input.ContainerMount & CustomMountOpts;
+export type MountOpts = ContainerMount & CustomMountOpts;
 
 export function _mount({
   source,
