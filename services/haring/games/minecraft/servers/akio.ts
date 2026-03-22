@@ -50,7 +50,7 @@ export const minecraftAkioService = new ContainerService(
         // "wwoo", // not compatible with clifftree
         "clifftree",
         "towns-and-towers",
-        "ct-overhaul-village",
+        "ct-overhaul-village:ZElsnCT3",
         "sparsestructures",
         "worldgen-patches",
         "cliff-face",
