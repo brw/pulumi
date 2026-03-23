@@ -1,25 +1,31 @@
+import { local, remote } from "@pulumi/command";
 import type { input } from "@pulumi/command/types";
+import { Container, ContainerArgs, getRegistryImage, RemoteImage } from "@pulumi/docker";
+import {
+  ContainerCapabilities,
+  ContainerLabel,
+  ContainerMount,
+  ContainerPort,
+  ContainerVolume,
+} from "@pulumi/docker/types/output";
 import type { CustomResourceOptions, Input, InvokeOptions, Output, Resource } from "@pulumi/pulumi";
 import { all, ComponentResource, output } from "@pulumi/pulumi";
 import path from "path";
+import { getEnv } from "~lib/env";
+import { MountOpts } from "./mounts";
 import { defaultNetwork } from "./networks";
 import { convertPorts } from "./ports";
-import { getEnv } from "~lib/env";
 import { haringDockerProvider } from "./providers";
-import { MountOpts } from "./mounts";
-import { ContainerCapabilities, ContainerPort } from "@pulumi/docker/types/input";
-import { remote, local } from "@pulumi/command";
-import { Container, ContainerArgs, getRegistryImage, RemoteImage } from "@pulumi/docker";
 
 export const defaultConnection = {
   host: getEnv("CONNECTION_HOST"),
   user: getEnv("CONNECTION_USER"),
-  port: Number(getEnv("CONNECTION_PORT")),
+  port: parseInt(getEnv("CONNECTION_PORT"), 10),
   // password: getEnv("CONNECTION.PASSWORD"),
 } satisfies input.remote.ConnectionArgs;
 
-type Env = string | number | boolean;
-type Port = (number | string | ContainerPort)[];
+export type Env = string | number | boolean;
+export type Port = number | string | ContainerPort;
 
 export type ContainerServiceArgs = Partial<
   Omit<ContainerArgs, "ports" | "labels" | "mounts" | "envs" | "capabilities"> & {
@@ -28,7 +34,7 @@ export type ContainerServiceArgs = Partial<
     subdomain: Input<string>;
     hostRule: Input<string>;
     hostRulePriority: Input<number>;
-    ports: Input<Port>;
+    ports: Input<Input<Port>[]>;
     middlewares: Input<Input<string>[]>;
     otherServicePorts: Input<Record<string, Input<number>>>;
     labels: Input<Record<string, Input<string | number>>>;
@@ -43,63 +49,74 @@ export type ContainerServiceArgs = Partial<
 
 // TODO: turn ContainerService into a factory function like https://sst.dev/docs/examples/#api-gateway-auth
 class ContainerService extends ComponentResource {
+  public readonly image: Output<string>;
   public readonly container: Output<Container>;
   public readonly localUrl: Output<string>;
+  public readonly host: Output<string>;
   public readonly ip: Output<string>;
-  public readonly mounts: Container["mounts"];
-  public readonly envs: Container["envs"];
-  public readonly capabilities: Container["capabilities"];
-  public readonly ports: Container["ports"];
+  public readonly mounts: Output<ContainerMount[]> | undefined;
+  public readonly volumes: Output<ContainerVolume[]> | undefined;
+  public readonly labels: Output<ContainerLabel[]> | undefined;
+  public readonly envs: Output<string[]>;
+  public readonly capabilities: Output<ContainerCapabilities> | undefined;
+  public readonly ports: Output<ContainerPort[]> | undefined;
 
   private commandConnection: Input<input.remote.ConnectionArgs>;
+  private dependsOn: Resource[];
 
   constructor(name: string, args: ContainerServiceArgs, opts?: CustomResourceOptions) {
     super("bas:docker:ContainerService", name, args, opts);
 
     this.commandConnection = args.commandConnection ?? defaultConnection;
 
-    const dependsOn: Resource[] = [];
-    output(opts?.dependsOn ?? []).apply((optsDependsOn) => {
+    this.dependsOn = [];
+    output(opts?.dependsOn).apply((optsDependsOn) => {
+      if (!optsDependsOn) return;
+
       if (Array.isArray(optsDependsOn)) {
-        dependsOn.push(...optsDependsOn);
+        this.dependsOn.push(...optsDependsOn);
       } else {
-        dependsOn.push(optsDependsOn);
+        this.dependsOn.push(optsDependsOn);
       }
     });
 
-    const image =
+    this.image = output(
       args.localImage ??
-      new RemoteImage(
-        `${name}`,
-        {
-          name: output(args.image ?? `lscr.io/linuxserver/${name}`).apply(async (image) => {
-            if (!image.match(/\..+\//)) {
-              image = `mirror.gcr.io/${image}`;
-            }
+        new RemoteImage(
+          `${name}`,
+          {
+            name: output(args.image ?? `lscr.io/linuxserver/${name}`).apply(async (image) => {
+              if (!image.match(/\..+\//)) {
+                image = `mirror.gcr.io/${image}`;
+              }
 
-            const registryImage = await getRegistryImage({ name: image }, { parent: this });
-            return `${registryImage.name}@${registryImage.sha256Digest}`;
-          }),
-          keepLocally: true,
-        },
-        { parent: this },
-      ).repoDigest;
+              const registryImage = await getRegistryImage({ name: image }, { parent: this });
+              return `${registryImage.name}@${registryImage.sha256Digest}`;
+            }),
+            keepLocally: true,
+          },
+          { parent: this },
+        ).repoDigest,
+    );
 
-    const mounts = output(args.mounts ?? []).apply((mounts) => {
-      let n = 0;
-      for (const mount of mounts) {
-        if (mount.type === "bind" && mount.source) {
-          const dir = mount.kind === "file" ? path.dirname(mount.source) : mount.source;
-          dependsOn.push(this.createRemoteDir(dir, name, n));
-          n++;
+    this.mounts =
+      args.mounts &&
+      output(args.mounts).apply((mounts) => {
+        let n = 0;
+        for (const mount of mounts) {
+          if (mount.type === "bind" && mount.source) {
+            const dir = mount.kind === "file" ? path.dirname(mount.source) : mount.source;
+            this.dependsOn.push(this.createRemoteDir(dir, name, n));
+            n++;
+          }
+
+          delete mount.kind;
         }
 
-        delete mount.kind;
-      }
+        return mounts;
+      });
 
-      return mounts;
-    });
-    this.mounts = mounts;
+    this.volumes = args.volumes && output(args.volumes);
 
     this.localUrl = all([args.networkMode, args.servicePort]).apply(([networkMode, servicePort]) =>
       servicePort && (networkMode === "host" || networkMode?.startsWith("container:"))
@@ -107,7 +124,7 @@ class ContainerService extends ComponentResource {
         : `http://${name}:${servicePort}`,
     );
 
-    const host = all([args.hostRule, args.subdomain]).apply(
+    this.host = all([args.hostRule, args.subdomain]).apply(
       ([hostRule, subdomain]) => hostRule ?? `${subdomain ?? name}.bas.sh`,
     );
 
@@ -147,8 +164,8 @@ class ContainerService extends ComponentResource {
       };
     });
 
-    const labels = all([
-      host,
+    this.labels = all([
+      this.host,
       args.labels ?? {},
       args.servicePort,
       args.otherServicePorts ?? {},
@@ -174,7 +191,7 @@ class ContainerService extends ComponentResource {
       }).map(([label, value]) => ({ label, value: value.toString() }));
     });
 
-    const envs = output(args.envs ?? {}).apply((envs) => [
+    this.envs = output(args.envs).apply((envs) => [
       ...Object.entries({
         PUID: `${getEnv("PUID")}`,
         PGID: `${getEnv("PGID")}`,
@@ -183,39 +200,33 @@ class ContainerService extends ComponentResource {
       }).map(([env, value]) => `${env}=${Array.isArray(value) ? value.join(",") : value}`),
     ]);
 
-    this.envs = envs;
+    this.ports = args.ports && output(args.ports).apply(convertPorts);
 
-    const ports = output(args.ports ?? []).apply(convertPorts);
-    this.ports = ports;
-
-    const ensureCapPrefix = (cap: string) => (cap.startsWith("CAP_") ? cap : `CAP_${cap}`);
-
-    const capabilities =
+    this.capabilities =
       args.capabilities &&
       output(args.capabilities).apply((caps) => {
-        if (Array.isArray(caps)) {
-          return { adds: caps.map(ensureCapPrefix) };
-        }
+        const ensureCapPrefix = (cap: string) => (cap.startsWith("CAP_") ? cap : `CAP_${cap}`);
+
+        if (Array.isArray(caps)) return { adds: caps.map(ensureCapPrefix) };
 
         caps.adds &&= caps.adds.map(ensureCapPrefix);
         caps.drops &&= caps.drops.map(ensureCapPrefix);
         return caps;
       });
-    this.capabilities = output(capabilities);
 
     this.container = output(
       new Container(
         name,
         {
           ...args,
-          image,
+          image: this.image,
           ...(opts?.deleteBeforeReplace !== false && { name: args.name ?? name }),
           command: args.command,
           restart: args.restart ?? "unless-stopped",
-          labels,
-          envs,
-          ports,
-          mounts,
+          labels: this.labels,
+          envs: this.envs,
+          ports: this.ports,
+          mounts: this.mounts,
           volumes: args.volumes,
           logDriver: "local",
           networkMode: args.networkMode ?? "bridge",
@@ -233,14 +244,14 @@ class ContainerService extends ComponentResource {
                 { host: "host.docker.internal", ip: "host-gateway" },
                 ...hosts,
               ]),
-          capabilities,
+          capabilities: this.capabilities,
         },
         {
           parent: this,
           deleteBeforeReplace: true,
           replaceOnChanges: ["mounts", "volumes"],
           ignoreChanges: opts?.ignoreChanges,
-          dependsOn,
+          dependsOn: this.dependsOn,
           ...opts,
         },
       ),
@@ -291,7 +302,6 @@ class ContainerService extends ComponentResource {
       {
         parent: this,
         deleteBeforeReplace: true,
-        // ignoreChanges: ["connection"],
       },
     );
   }
