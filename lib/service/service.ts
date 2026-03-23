@@ -72,11 +72,14 @@ class ContainerService extends ComponentResource {
       new RemoteImage(
         `${name}`,
         {
-          name: output(args.image ?? `lscr.io/linuxserver/${name}`).apply(async (image) =>
-            getRegistryImage({ name: image }, { parent: this }).then(
-              (registryImage) => `${registryImage.name}@${registryImage.sha256Digest}`,
-            ),
-          ),
+          name: output(args.image ?? `lscr.io/linuxserver/${name}`).apply(async (image) => {
+            if (!image.match(/\..+\//)) {
+              image = `mirror.gcr.io/${image}`;
+            }
+
+            const registryImage = await getRegistryImage({ name: image }, { parent: this });
+            return `${registryImage.name}@${registryImage.sha256Digest}`;
+          }),
           keepLocally: true,
         },
         { parent: this },
