@@ -58,7 +58,7 @@ const copyMsmtprc = new remote.CopyToRemote("tranquil-msmtprc", {
   remotePath: "/home/bas/docker/tranquil/msmtprc",
 });
 
-const PDS_USER_HANDLE_DOMAINS = ["tranquil.bas.sh", "t.bas.sh", "on.bas.sh"];
+const PDS_USER_HANDLE_DOMAINS = ["tranquil.bas.sh", "t.bas.sh", "on.bas.sh", "of.bas.sh"];
 export const tranquilDnsRecords = PDS_USER_HANDLE_DOMAINS.flatMap((host) => [
   new DnsRecord(`tranquil-${host}`, {
     zoneId: getEnv("CLOUDFLARE_ZONE_ID"),
@@ -83,7 +83,7 @@ export const tranquilService = new ContainerService(
   {
     localImage: tranquilImage.digest,
     servicePort: 3000,
-    hostRule: "HostRegexp(`^(.+?\\.)?(t(ranquil)|on)\\.bas\\.sh`)",
+    hostRule: "HostRegexp(`^(.+?\\.)?(t(ranquil)|o(n|f))\\.bas\\.sh`)",
     mounts: [
       confMount("tranquil/backups", "/var/lib/tranquil/backups"),
       confMount("tranquil/blobs", "/var/lib/tranquil/blobs"),
@@ -118,12 +118,12 @@ export const tranquilService = new ContainerService(
       "traefik.http.routers.tranquil-redirect.middlewares": "cloudflare,tranquil-redirect",
 
       "traefik.http.middlewares.tranquil-user-redirect.redirectregex.regex":
-        "^https://(.+\\.(t(ranquil)?|on)\\.bas\\.sh)/(.*)$",
+        "^https://(.+\\.(t(ranquil)?|o(n|f))\\.bas\\.sh)/(.*)$",
       "traefik.http.middlewares.tranquil-user-redirect.redirectregex.replacement":
         "https://bsky.app/profile/${1}",
       "traefik.http.routers.tranquil-user-redirect.entrypoints": "https",
       "traefik.http.routers.tranquil-user-redirect.rule":
-        "HostRegexp(`^.+\\.(t(ranquil)?|on)\\.bas\\.sh$`) && !PathPrefix(`/.well-known`)",
+        "HostRegexp(`^.+\\.(t(ranquil)?|o(n|f))\\.bas\\.sh$`) && !PathPrefix(`/.well-known`)",
       "traefik.http.routers.tranquil-user-redirect.middlewares":
         "cloudflare,tranquil-user-redirect",
     },

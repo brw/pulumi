@@ -54,7 +54,7 @@ export const traefikService = new ContainerService(
       "--entrypoints.https.http.tls=true",
       "--entrypoints.https.http.tls.certresolver=cloudflare",
       "--entrypoints.https.http.tls.domains[0].main=bas.sh",
-      "--entrypoints.https.http.tls.domains[0].sans=*.bas.sh,*.tranquil.bas.sh,*.pegasus.bas.sh,*.on.bas.sh,*.t.bas.sh",
+      "--entrypoints.https.http.tls.domains[0].sans=*.bas.sh,*.tranquil.bas.sh,*.pegasus.bas.sh,*.on.bas.sh,*.t.bas.sh,*.of.bas.sh",
       "--entrypoints.https.http.tls.domains[1].main=danimutiara.nl",
       "--entrypoints.https.http.tls.domains[1].sans=*.danimutiara.nl",
 
