@@ -3,7 +3,7 @@ import dockerBuild from "@pulumi/docker-build";
 import { getEnv } from "~lib/env";
 import { interpolate } from "@pulumi/pulumi";
 import { confMount, dataMount } from "~lib/service/mounts";
-import { ensure, getLatestCommit } from "~lib/util";
+import { getLatestCommit } from "~lib/util";
 import { unboundService } from "../networking/unbound/unbound";
 import { STATIC_IPS } from "../ips";
 import { defaultNetwork } from "~lib/service/networks";
