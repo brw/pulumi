@@ -136,8 +136,8 @@ export const minecraftAkioService = new ContainerService(
 
         // networking
         "no-chat-reports",
-        "viafabric",
-        "viabackwards",
+        // "viafabric",
+        // "viabackwards",
 
         // polymer/custom stuff
         "vestigate",
