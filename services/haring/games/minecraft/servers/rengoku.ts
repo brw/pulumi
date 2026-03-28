@@ -298,7 +298,7 @@ export const minecraftRengokuService = new ContainerService(
         // "no-kebab",
         "dragon-movement-fix",
         "shieldstun",
-        "deadplayerchunkupdates",
+        // "deadplayerchunkupdates", // 404
         "underwater-swim-fix-(mc-220390)",
         "structures-spawn-biomes-fix",
         // "crashexploitfixer",
