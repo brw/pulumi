@@ -140,6 +140,7 @@ export const minecraftRengokuService = new ContainerService(
         // "silk",
         // "loot-table-modifier",
         "lithostitched",
+        "daisy",
 
         // world rendering
         "c2me-fabric",
