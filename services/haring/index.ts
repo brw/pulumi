@@ -25,6 +25,7 @@ export * from "./media/tracearr";
 
 // export * from "./monitoring/beszel";
 // export * from "./monitoring/glances";
+export * from "./monitoring/certstream";
 export * from "./monitoring/grafana";
 // export * from "./monitoring/netdata";
 export * from "./monitoring/prometheus";
