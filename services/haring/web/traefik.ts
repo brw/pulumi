@@ -54,9 +54,11 @@ export const traefikService = new ContainerService(
       "--entrypoints.https.http.tls=true",
       "--entrypoints.https.http.tls.certresolver=cloudflare",
       "--entrypoints.https.http.tls.domains[0].main=bas.sh",
-      "--entrypoints.https.http.tls.domains[0].sans=*.bas.sh,*.tranquil.bas.sh,*.pegasus.bas.sh,*.on.bas.sh,*.t.bas.sh,*.of.bas.sh",
+      "--entrypoints.https.http.tls.domains[0].sans=*.bas.sh,*.tranquil.bas.sh,*.pegasus.bas.sh,*.on.bas.sh,*.t.bas.sh,*.of.bas.sh,*.pds.bas.sh",
       "--entrypoints.https.http.tls.domains[1].main=danimutiara.nl",
       "--entrypoints.https.http.tls.domains[1].sans=*.danimutiara.nl",
+      "--entrypoints.https.http.tls.domains[2].main=vod.watch",
+      "--entrypoints.https.http.tls.domains[2].sans=*.vod.watch",
 
       "--certificatesresolvers.cloudflare.acme.dnschallenge=true",
       "--certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare",
@@ -90,6 +92,8 @@ export const traefikService = new ContainerService(
       "traefik.http.routers.httpsredirect.entrypoints": "http",
       "traefik.http.routers.httpsredirect.middlewares": "cloudflare,httpsredirect",
 
+      "traefik.http.middlewares.autodetect.contenttype": "true",
+
       "traefik.http.middlewares.auth.basicauth.users":
         "bas:$2y$05$XUkzwNnxl2sdNIMqrqspsulGw6fbj1smtwk7bMClLiDIsrR3EatOG",
 
@@ -109,6 +113,12 @@ export const traefikService = new ContainerService(
       "traefik.http.routers.atproto-did.rule": "Host(`bas.sh`) && Path(`/.well-known/atproto-did`)",
       "traefik.http.routers.atproto-did.entrypoints": "https",
       "traefik.http.routers.atproto-did.middlewares": "cloudflare,cors,atproto-did",
+
+      "traefik.http.middlewares.vod.plugin.staticresponse.statuscode": "200",
+      "traefik.http.middlewares.vod.plugin.staticresponse.body": "poggers",
+      "traefik.http.routers.vod.rule": "Host(`vod.watch`)",
+      "traefik.http.routers.vod.entrypoints": "https",
+      "traefik.http.routers.vod.middlewares": "cloudflare,vod",
 
       "traefik.http.middlewares.relay.headers.customrequestheaders.Origin": "",
 
