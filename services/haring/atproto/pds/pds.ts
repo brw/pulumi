@@ -1,8 +1,11 @@
 import { DnsRecord } from "@pulumi/cloudflare";
+import { remote } from "@pulumi/command";
+import { asset, interpolate, output } from "@pulumi/pulumi";
+import path from "path";
 import { getEnv } from "~lib/env";
 import { fetchRelays } from "~lib/relay-hosts";
-import { confMount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
+import { confMount, ssdcacheMount } from "~lib/service/mounts";
+import { ContainerService, defaultConnection } from "~lib/service/service";
 
 export const pdsService = new ContainerService("pds", {
   image: "ghcr.io/bluesky-social/pds",
@@ -35,15 +38,41 @@ export const pdsService = new ContainerService("pds", {
     "traefik.http.routers.pds-favicon.entrypoints": "https",
     "traefik.http.routers.pds-favicon.rule": "Host(`pds.bas.sh`) && Path(`/favicon.ico`)",
     "traefik.http.routers.pds-favicon.middlewares": "cloudflare,pds-favicon",
-
-    "traefik.http.middlewares.pds-age-assurance.plugin.staticresponse.statuscode": "200",
-    "traefik.http.middlewares.pds-age-assurance.plugin.staticresponse.body":
-      '{"state":{"lastInitiatedAt":"2025-07-14T14:22:43.912Z","status":"assured","access":"full"},"metadata":{"accountCreatedAt":"2022-11-17T00:35:16.391Z"}}',
-    "traefik.http.routers.pds-age-assurance.rule":
-      "Host(`pds.bas.sh`) && Path(`/xrpc/app.bsky.ageassurance.getState`)",
-    "traefik.http.routers.pds-age-assurance.entrypoints": "https",
-    "traefik.http.routers.pds-age-assurance.middlewares": "cloudflare,cors,json,pds-age-assurance",
   },
+});
+
+const webMount = ssdcacheMount("web/pds", "/var/www");
+
+const MOTD_FILE_NAME = "motd.txt";
+const motdFile = new asset.FileAsset(path.join(import.meta.dirname, MOTD_FILE_NAME));
+const copyMotdFile = new remote.CopyToRemote("pds-motd", {
+  connection: defaultConnection,
+  source: motdFile,
+  remotePath: output(webMount.source).apply((dir) => path.join(dir, MOTD_FILE_NAME)),
+});
+
+const CADDYFILE = `
+  :80  {
+    handle /xrpc/app.bsky.ageassurance.getState {
+      respond {"state":{"lastInitiatedAt":"2025-07-14T14:22:43.912Z","status":"assured","access":"full"},"metadata":{"accountCreatedAt":"2022-11-17T00:35:16.391Z"}} 200
+    }
+
+    handle / {
+      try_files /${MOTD_FILE_NAME}
+      file_server
+    }
+  }
+`;
+
+export const pdsCaddyService = new ContainerService(`pds-web`, {
+  image: "caddy",
+  servicePort: 80,
+  hostRule: "Host(`pds.bas.sh`) && (Path(`/`) || Path(`/xrpc/app.bsky.ageassurance.getState`))",
+  hostRulePriority: 1000,
+  command: ["/bin/sh", "-c", `echo '${CADDYFILE}' | caddy run --config - --adapter caddyfile`],
+  mounts: [webMount],
+  workingDir: "/var/www",
+  middlewares: ["cors"],
 });
 
 export const pdsDnsRecord = new DnsRecord("pds", {

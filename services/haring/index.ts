@@ -58,11 +58,11 @@ export * from "./files/synclounge";
 
 export * from "./atproto/tranquil/tranquil";
 export * from "./atproto/pegasus";
-export * from "./atproto/pds";
+export * from "./atproto/pds/pds";
 export * from "./atproto/relay";
 // export * from "./atproto/social-app";
-export * from "./atproto/knot";
-export * from "./atproto/spindle";
+export * from "./atproto/tangled/knot";
+export * from "./atproto/tangled/spindle";
 
 export * from "./communication/ergo";
 export * from "./communication/thelounge";

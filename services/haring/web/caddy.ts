@@ -5,7 +5,7 @@ import { ContainerService } from "~lib/service/service";
 const SUBDOMAINS = ["get", "static", "files", "f", "i"];
 
 const CADDYFILE = `
-  ${SUBDOMAINS.map((sub) => `http://${sub}.bas.sh:80`).join(" ")} {
+  :80 {
     file_server browse {
     }
     header X-Robots-Tag "noindex"

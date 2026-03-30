@@ -63,7 +63,7 @@ export const pegasusWildcardDnsRecord = new DnsRecord("pegasus-wildcard", {
 });
 
 const CADDYFILE = `
-  http://horse.pegasus.bas.sh:80 {
+  :80 {
     respond <<HORSE
 
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠨⣧⡀⠀⠀⠀⢀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
