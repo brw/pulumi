@@ -98,14 +98,17 @@ export const traefikService = new ContainerService(
       // "traefik.http.middlewares.cloudflare.plugin.cloudflare.debug": "true",
       "traefik.http.middlewares.cloudflare.plugin.cloudflare.disableDefault": "false",
 
+      "traefik.http.middlewares.json.headers.customrequestheaders.Content-Type": "application/json",
+
+      "traefik.http.middlewares.cors.headers.accesscontrolallowmethods": "GET",
+      "traefik.http.middlewares.cors.headers.accesscontrolallowheaders": "*",
+      "traefik.http.middlewares.cors.headers.accesscontrolalloworiginlist": "*",
+
       "traefik.http.middlewares.atproto-did.plugin.staticresponse.statuscode": "200",
       "traefik.http.middlewares.atproto-did.plugin.staticresponse.body": getEnv("ATPROTO_DID"),
-      "traefik.http.middlewares.atproto-did-cors.headers.accesscontrolallowmethods": "GET",
-      "traefik.http.middlewares.atproto-did-cors.headers.accesscontrolallowheaders": "*",
-      "traefik.http.middlewares.atproto-did-cors.headers.accesscontrolalloworiginlist": "*",
       "traefik.http.routers.atproto-did.rule": "Host(`bas.sh`) && Path(`/.well-known/atproto-did`)",
       "traefik.http.routers.atproto-did.entrypoints": "https",
-      "traefik.http.routers.atproto-did.middlewares": "cloudflare,atproto-did-cors,atproto-did",
+      "traefik.http.routers.atproto-did.middlewares": "cloudflare,cors,atproto-did",
 
       "traefik.http.middlewares.relay.headers.customrequestheaders.Origin": "",
 

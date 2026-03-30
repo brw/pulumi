@@ -35,6 +35,14 @@ export const pdsService = new ContainerService("pds", {
     "traefik.http.routers.pds-favicon.entrypoints": "https",
     "traefik.http.routers.pds-favicon.rule": "Host(`pds.bas.sh`) && Path(`/favicon.ico`)",
     "traefik.http.routers.pds-favicon.middlewares": "cloudflare,pds-favicon",
+
+    "traefik.http.middlewares.pds-age-assurance.plugin.staticresponse.statuscode": "200",
+    "traefik.http.middlewares.pds-age-assurance.plugin.staticresponse.body":
+      '{"state":{"lastInitiatedAt":"2025-07-14T14:22:43.912Z","status":"assured","access":"full"},"metadata":{"accountCreatedAt":"2022-11-17T00:35:16.391Z"}}',
+    "traefik.http.routers.pds-age-assurance.rule":
+      "Host(`pds.bas.sh`) && Path(`/xrpc/app.bsky.ageassurance.getState`)",
+    "traefik.http.routers.pds-age-assurance.entrypoints": "https",
+    "traefik.http.routers.pds-age-assurance.middlewares": "cloudflare,cors,json,pds-age-assurance",
   },
 });
 
