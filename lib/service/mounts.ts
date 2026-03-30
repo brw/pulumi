@@ -1,13 +1,15 @@
 import { ContainerMount } from "@pulumi/docker/types/input";
 import { Input, output, Unwrap } from "@pulumi/pulumi";
 
-type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
+type WithOptional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
+
+type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
 
 type CustomMountOpts = {
   kind?: Input<"directory" | "file">;
 };
 
-export type MountOpts = ContainerMount & CustomMountOpts;
+export type MountOpts = WithRequired<ContainerMount, "source"> & CustomMountOpts;
 
 export function _mount({
   source,
@@ -16,11 +18,7 @@ export function _mount({
   bindOptions,
   readOnly,
   kind = "directory",
-}: Optional<MountOpts, "target" | "type">): MountOpts {
-  if (!source) {
-    throw Error("mount does not have source");
-  }
-
+}: WithOptional<MountOpts, "target" | "type">): MountOpts {
   target ??= source;
   bindOptions = output(bindOptions).apply((bindOptions) => ({
     propagation: "rshared",
