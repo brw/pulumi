@@ -16,6 +16,7 @@ export const pdsService = new ContainerService("pds", {
     PDS_DATA_DIRECTORY: "/pds",
     PDS_BLOBSTORE_DISK_LOCATION: "/pds/blocks",
     PDS_BLOB_UPLOAD_LIMIT: "2147483648",
+    PDS_RATE_LIMITS_ENABLED: false,
     PDS_DID_PLC_URL: "https://plc.directory",
     PDS_BSKY_APP_VIEW_URL: "https://api.bsky.app",
     PDS_BSKY_APP_VIEW_DID: "did:web:api.bsky.app",
@@ -25,6 +26,15 @@ export const pdsService = new ContainerService("pds", {
     LOG_ENABLED: "true",
     PDS_EMAIL_SMTP_URL: getEnv("PDS_SMTP_AUTH_URI"),
     PDS_EMAIL_FROM_ADDRESS: "PDS <pds@bas.sh>",
+  },
+  labels: {
+    "traefik.http.middlewares.pds-favicon.redirectregex.regex":
+      "^https://pds\\.bas\\.sh/favicon\\.ico$",
+    "traefik.http.middlewares.pds-favicon.redirectregex.replacement":
+      "https://tranquil.bas.sh/favicon.ico",
+    "traefik.http.routers.pds-favicon.entrypoints": "https",
+    "traefik.http.routers.pds-favicon.rule": "Host(`pds.bas.sh`) && Path(`/favicon.ico`)",
+    "traefik.http.routers.pds-favicon.middlewares": "cloudflare,pds-favicon",
   },
 });
 
