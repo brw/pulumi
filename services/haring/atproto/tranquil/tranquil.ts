@@ -29,8 +29,8 @@ const tranquilImage = new dockerBuild.Image(
       "https://tangled.org/tranquil.farm/tranquil-pds/commits/main",
     ),
     customTimeouts: {
-      create: "30m",
-      update: "30m",
+      create: "60m",
+      update: "60m",
     },
   },
 );
