@@ -61,6 +61,9 @@ export const relayService = new ContainerService(
       RELAY_PERSIST_DIR: "/data/relay/persist",
       RELAY_REPLAY_WINDOW: "24h",
       RELAY_LENIENT_SYNC_VALIDATION: true,
+      MAX_DB_CONNECTIONS: 80,
+      RELAY_HOST_CONCURRENCY: 80,
+      RELAY_DEFAULT_REPO_LIMIT: 1000,
       RELAY_TRUSTED_DOMAINS: [
         "*.host.bsky.network",
         "atproto.brid.gy",
