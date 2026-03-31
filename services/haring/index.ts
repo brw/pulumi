@@ -81,6 +81,7 @@ export * from "./remote/mkv-muxing-batch";
 // export * from "./remote/redroid"; // TODO: seems to break my entire server's networking setup somehow?
 export * from "./remote/sealskin";
 
+export * from "./other/sccache";
 export * from "./other/anki";
 // export * from "./other/kopia";
 export * from "./other/librespeed";
