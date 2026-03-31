@@ -33,18 +33,14 @@ const tranquilImage = new dockerBuild.Image(
     ),
     customTimeouts: {
       create: "30m",
+      update: "30m",
     },
   },
 );
 
 const postgresTranquilService = new ContainerService("postgres-tranquil", {
   image: "postgres",
-  volumes: [
-    {
-      volumeName: "postgres-tranquil",
-      containerPath: "/var/lib/postgresql",
-    },
-  ],
+  mounts: [confMount("postgres-tranquil", "/var/lib/postgresql")],
   envs: {
     POSTGRES_PASSWORD: getEnv("POSTGRES_PASSWORD"),
     POSTGRES_DB: "pds",
@@ -59,7 +55,7 @@ const copyMsmtprc = new remote.CopyToRemote("tranquil-msmtprc", {
 });
 
 const PDS_USER_HANDLE_DOMAINS = ["tranquil.bas.sh", "t.bas.sh", "on.bas.sh", "of.bas.sh"];
-export const tranquilDnsRecords = PDS_USER_HANDLE_DOMAINS.flatMap((host) => [
+for (const host of PDS_USER_HANDLE_DOMAINS) {
   new DnsRecord(`tranquil-${host}`, {
     zoneId: getEnv("CLOUDFLARE_ZONE_ID"),
     name: host,
@@ -67,7 +63,7 @@ export const tranquilDnsRecords = PDS_USER_HANDLE_DOMAINS.flatMap((host) => [
     type: "CNAME",
     content: "haring.bas.sh",
     proxied: false,
-  }),
+  });
   new DnsRecord(`tranquil-wildcard-${host}`, {
     zoneId: getEnv("CLOUDFLARE_ZONE_ID"),
     name: `*.${host}`,
@@ -75,8 +71,8 @@ export const tranquilDnsRecords = PDS_USER_HANDLE_DOMAINS.flatMap((host) => [
     type: "CNAME",
     content: "tranquil.bas.sh",
     proxied: false,
-  }),
-]);
+  });
+}
 
 export const tranquilService = new ContainerService(
   "tranquil",
@@ -128,5 +124,5 @@ export const tranquilService = new ContainerService(
         "cloudflare,tranquil-user-redirect",
     },
   },
-  { dependsOn: [...tranquilDnsRecords, copyMsmtprc] },
+  { dependsOn: [copyMsmtprc] },
 );
