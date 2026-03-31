@@ -76,6 +76,7 @@ export const relayService = new ContainerService(
         "eurosky.social",
         "pds.witchcraft.systems",
         "npmx.social",
+        "*.stream.place",
       ],
     },
   },
