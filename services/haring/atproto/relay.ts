@@ -88,7 +88,7 @@ export const relayService = new ContainerService(
     localImage: interpolate`${relayImage.ref}@${relayImage.digest}`,
     servicePort: 2470,
     networkMode: "host",
-    mounts: [dataMount("media/relay", "/data/relay/persist")],
+    mounts: [nvmeMount("relay", "/data/relay/persist")],
     middlewares: ["relay"],
     dns: [STATIC_IPS.UNBOUND],
     envs: {
