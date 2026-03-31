@@ -1,10 +1,10 @@
 import dockerBuild from "@pulumi/docker-build";
 import { interpolate } from "@pulumi/pulumi";
 import { getEnv } from "~lib/env";
-import { confMount, dataMount, nvmeMount } from "~lib/service/mounts";
+import { confMount, nvmeMount } from "~lib/service/mounts";
 import { defaultNetwork } from "~lib/service/networks";
 import { ContainerService } from "~lib/service/service";
-import { getLatestCommit } from "~lib/util";
+import { getGithubContents } from "~lib/util";
 
 import { STATIC_IPS } from "../ips";
 import { unboundService } from "../networking/unbound/unbound";
@@ -32,18 +32,12 @@ const relayImage = new dockerBuild.Image(
     buildArgs: {
       BUILDKIT_CONTEXT_KEEP_GIT_DIR: "true",
     },
-    exports: [
-      {
-        docker: {},
-      },
-    ],
+    exports: [{ docker: {} }],
     push: false,
     buildOnPreview: false,
   },
   {
-    // replacementTrigger: await getLatestCommit(
-    //   "https://github.com/bluesky-social/indigo/commits/main/cmd/relay",
-    // ),
+    replacementTrigger: await getGithubContents("bluesky-social/indigo", "cmd/relay"),
   },
 );
 

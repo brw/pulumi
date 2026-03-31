@@ -4,11 +4,11 @@ import { local, remote } from "@pulumi/command";
 import type { input } from "@pulumi/command/types";
 import { Container, type ContainerArgs, getRegistryImage, RemoteImage } from "@pulumi/docker";
 import type {
-ContainerCapabilities,
-ContainerLabel,
-ContainerMount,
-ContainerPort,
-ContainerVolume,
+  ContainerCapabilities,
+  ContainerLabel,
+  ContainerMount,
+  ContainerPort,
+  ContainerVolume,
 } from "@pulumi/docker/types/output";
 import type { CustomResourceOptions, Input, InvokeOptions, Output, Resource } from "@pulumi/pulumi";
 import { all, ComponentResource, output } from "@pulumi/pulumi";

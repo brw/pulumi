@@ -5,7 +5,7 @@ import { interpolate } from "@pulumi/pulumi";
 import { getEnv } from "~lib/env";
 import { defaultNetwork } from "~lib/service/networks";
 import { ContainerService } from "~lib/service/service";
-import { getLatestTag } from "~lib/util";
+import { getLatestGithubTag } from "~lib/util";
 
 import { STATIC_IPS } from "../ips";
 
@@ -15,7 +15,7 @@ export const sccacheImage = new Image("sccache-scheduler", {
     location: path.join(import.meta.dirname, "sccache"),
   },
   buildArgs: {
-    VERSION: getLatestTag("mozilla/sccache"),
+    VERSION: getLatestGithubTag("mozilla/sccache"),
   },
   exports: [
     {

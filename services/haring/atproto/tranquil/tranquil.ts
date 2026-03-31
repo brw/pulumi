@@ -8,7 +8,7 @@ import { getEnv } from "~lib/env";
 import { fetchRelays } from "~lib/relay-hosts";
 import { _mount, confMount, mount } from "~lib/service/mounts";
 import { ContainerService, defaultConnection } from "~lib/service/service";
-import { getLatestCommit } from "~lib/util";
+import { getLatestTangledCommit } from "~lib/util";
 
 const tranquilImage = new dockerBuild.Image(
   "tranquil-pds",
@@ -25,7 +25,7 @@ const tranquilImage = new dockerBuild.Image(
     buildOnPreview: false,
   },
   {
-    replacementTrigger: await getLatestCommit(
+    replacementTrigger: await getLatestTangledCommit(
       "https://tangled.org/tranquil.farm/tranquil-pds/commits/main",
     ),
     customTimeouts: {

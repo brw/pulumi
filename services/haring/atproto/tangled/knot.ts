@@ -5,7 +5,7 @@ import { asset } from "@pulumi/pulumi";
 import { getEnv } from "~lib/env";
 import { confMount, mount, nvmeMount } from "~lib/service/mounts";
 import { ContainerService, defaultConnection } from "~lib/service/service";
-import { getLatestCommit } from "~lib/util";
+import { getLatestTangledCommit } from "~lib/util";
 
 const knotImage = new Image(
   "knot",
@@ -19,16 +19,12 @@ const knotImage = new Image(
     buildArgs: {
       BUILDKIT_CONTEXT_KEEP_GIT_DIR: "true",
     },
-    exports: [
-      {
-        docker: {},
-      },
-    ],
+    exports: [{ docker: {} }],
     push: false,
     buildOnPreview: false,
   },
   {
-    replacementTrigger: await getLatestCommit(
+    replacementTrigger: await getLatestTangledCommit(
       "https://tangled.org/bas.sh/knot-docker/commits/fork",
     ),
   },
