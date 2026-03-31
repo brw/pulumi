@@ -44,13 +44,6 @@ const postgresTranquilService = new ContainerService("postgres-tranquil", {
   },
 });
 
-const msmtprcFile = new asset.FileAsset(path.join(import.meta.dirname, "msmtprc"));
-const copyMsmtprc = new remote.CopyToRemote("tranquil-msmtprc", {
-  connection: defaultConnection,
-  source: msmtprcFile,
-  remotePath: "/home/bas/docker/tranquil/msmtprc",
-});
-
 const PDS_USER_HANDLE_DOMAINS = ["tranquil.bas.sh", "t.bas.sh", "on.bas.sh", "of.bas.sh"];
 for (const host of PDS_USER_HANDLE_DOMAINS) {
   new DnsRecord(`tranquil-${host}`, {
@@ -71,55 +64,53 @@ for (const host of PDS_USER_HANDLE_DOMAINS) {
   });
 }
 
-export const tranquilService = new ContainerService(
-  "tranquil",
-  {
-    localImage: tranquilImage.digest,
-    servicePort: 3000,
-    hostRule: "HostRegexp(`^(.+?\\.)?(t(ranquil)|o(n|f))\\.bas\\.sh$`)",
-    mounts: [
-      confMount("tranquil/backups", "/var/lib/tranquil/backups"),
-      confMount("tranquil/blobs", "/var/lib/tranquil/blobs"),
-      mount(copyMsmtprc.remotePath, "/etc/msmtprc", { kind: "file" }),
-    ],
-    envs: {
-      DATABASE_URL: interpolate`postgres://postgres:${getEnv("POSTGRES_PASSWORD")}@${postgresTranquilService.container.name}/pds`,
-      PDS_HOSTNAME: "tranquil.bas.sh",
-      BLOB_STORAGE_PATH: "/var/lib/tranquil/blobs",
-      BACKUP_STORAGE_PATH: "/var/lib/tranquil/backups",
-      JWT_SECRET: getEnv("TRANQUIL_JWT_SECRET"),
-      DPOP_SECRET: getEnv("TRANQUIL_DPOP_SECRET"),
-      MASTER_KEY: getEnv("TRANQUIL_MASTER_KEY"),
-      MAIL_FROM_ADDRESS: "tranquil@bas.sh",
-      MAIL_FROM_NAME: "Tranquil PDS",
-      SMTP_PASSWORD: getEnv("SMTP_PASSWORD"),
-      DISCORD_BOT_TOKEN: getEnv("TRANQUIL_DISCORD_BOT_TOKEN"),
-      INVITE_CODE_REQUIRED: true,
-      ACCEPTING_REPO_IMPORTS: true,
-      PDS_USER_HANDLE_DOMAINS,
-      CONTACT_EMAIL: getEnv("EMAIL"),
-      PDS_AGE_ASSURANCE_OVERRIDE: true,
-      CRAWLERS: fetchRelays(),
-    },
-    labels: {
-      "traefik.http.middlewares.tranquil-redirect.redirectregex.regex":
-        "^https://(t|on)\\.bas\\.sh/(.*)$",
-      "traefik.http.middlewares.tranquil-redirect.redirectregex.replacement":
-        "https://tranquil.bas.sh/${2}",
-      "traefik.http.routers.tranquil-redirect.entrypoints": "https",
-      "traefik.http.routers.tranquil-redirect.rule": "HostRegexp(`^(t|on)\\.bas\\.sh$`)",
-      "traefik.http.routers.tranquil-redirect.middlewares": "cloudflare,tranquil-redirect",
-
-      "traefik.http.middlewares.tranquil-user-redirect.redirectregex.regex":
-        "^https://(.+\\.(t(ranquil)?|o(n|f))\\.bas\\.sh)/(.*)$",
-      "traefik.http.middlewares.tranquil-user-redirect.redirectregex.replacement":
-        "https://bsky.app/profile/${1}",
-      "traefik.http.routers.tranquil-user-redirect.entrypoints": "https",
-      "traefik.http.routers.tranquil-user-redirect.rule":
-        "HostRegexp(`^.+\\.(t(ranquil)?|o(n|f))\\.bas\\.sh$`) && !PathPrefix(`/.well-known`)",
-      "traefik.http.routers.tranquil-user-redirect.middlewares":
-        "cloudflare,tranquil-user-redirect",
-    },
+export const tranquilService = new ContainerService("tranquil", {
+  localImage: tranquilImage.digest,
+  servicePort: 3000,
+  hostRule: "HostRegexp(`^(.+?\\.)?(t(ranquil)|o(n|f))\\.bas\\.sh$`)",
+  mounts: [
+    confMount("tranquil/backups", "/var/lib/tranquil/backups"),
+    confMount("tranquil/blobs", "/var/lib/tranquil/blobs"),
+  ],
+  envs: {
+    DATABASE_URL: interpolate`postgres://postgres:${getEnv("POSTGRES_PASSWORD")}@${postgresTranquilService.container.name}/pds`,
+    PDS_HOSTNAME: "tranquil.bas.sh",
+    BLOB_STORAGE_PATH: "/var/lib/tranquil/blobs",
+    BACKUP_STORAGE_PATH: "/var/lib/tranquil/backups",
+    JWT_SECRET: getEnv("TRANQUIL_JWT_SECRET"),
+    DPOP_SECRET: getEnv("TRANQUIL_DPOP_SECRET"),
+    MASTER_KEY: getEnv("TRANQUIL_MASTER_KEY"),
+    MAIL_FROM_ADDRESS: "tranquil@bas.sh",
+    MAIL_FROM_NAME: "Tranquil PDS - Bas",
+    MAIL_SMARTHOST_HOST: "smtp.migadu.com",
+    MAIL_SMARTHOST_PORT: 465,
+    MAIL_SMARTHOST_USERNAME: "hi@bas.sh",
+    MAIL_SMARTHOST_PASSWORD: getEnv("SMTP_PASSWORD"),
+    MAIL_SMARTHOST_TLS: "implicit",
+    DISCORD_BOT_TOKEN: getEnv("TRANQUIL_DISCORD_BOT_TOKEN"),
+    INVITE_CODE_REQUIRED: true,
+    ACCEPTING_REPO_IMPORTS: true,
+    PDS_USER_HANDLE_DOMAINS,
+    CONTACT_EMAIL: getEnv("EMAIL"),
+    PDS_AGE_ASSURANCE_OVERRIDE: true,
+    CRAWLERS: fetchRelays(),
   },
-  { dependsOn: [copyMsmtprc] },
-);
+  labels: {
+    "traefik.http.middlewares.tranquil-redirect.redirectregex.regex":
+      "^https://(t|on)\\.bas\\.sh/(.*)$",
+    "traefik.http.middlewares.tranquil-redirect.redirectregex.replacement":
+      "https://tranquil.bas.sh/${2}",
+    "traefik.http.routers.tranquil-redirect.entrypoints": "https",
+    "traefik.http.routers.tranquil-redirect.rule": "HostRegexp(`^(t|on)\\.bas\\.sh$`)",
+    "traefik.http.routers.tranquil-redirect.middlewares": "cloudflare,tranquil-redirect",
+
+    "traefik.http.middlewares.tranquil-user-redirect.redirectregex.regex":
+      "^https://(.+\\.(t(ranquil)?|o(n|f))\\.bas\\.sh)/(.*)$",
+    "traefik.http.middlewares.tranquil-user-redirect.redirectregex.replacement":
+      "https://bsky.app/profile/${1}",
+    "traefik.http.routers.tranquil-user-redirect.entrypoints": "https",
+    "traefik.http.routers.tranquil-user-redirect.rule":
+      "HostRegexp(`^.+\\.(t(ranquil)?|o(n|f))\\.bas\\.sh$`) && !PathPrefix(`/.well-known`)",
+    "traefik.http.routers.tranquil-user-redirect.middlewares": "cloudflare,tranquil-user-redirect",
+  },
+});
