@@ -1,8 +1,8 @@
+import { Volume } from "@pulumi/docker";
 import { getEnv } from "~lib/env";
 import { mount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
-import { Volume } from "@pulumi/docker";
 import { haringDockerProvider } from "~lib/service/providers";
+import { ContainerService } from "~lib/service/service";
 
 const tailscaleVolume = new Volume(
   "tailscale",

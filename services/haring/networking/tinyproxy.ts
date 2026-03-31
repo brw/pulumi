@@ -1,5 +1,6 @@
 import { interpolate } from "@pulumi/pulumi";
 import { ContainerService } from "~lib/service/service";
+
 import { wireguardProtonService } from "./wireguard";
 
 export const tinyproxyService = new ContainerService("tinyproxy", {

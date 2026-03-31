@@ -1,18 +1,20 @@
+import path from "path";
+
 import { local, remote } from "@pulumi/command";
 import type { input } from "@pulumi/command/types";
-import { Container, ContainerArgs, getRegistryImage, RemoteImage } from "@pulumi/docker";
-import {
-  ContainerCapabilities,
-  ContainerLabel,
-  ContainerMount,
-  ContainerPort,
-  ContainerVolume,
+import { Container, type ContainerArgs, getRegistryImage, RemoteImage } from "@pulumi/docker";
+import type {
+ContainerCapabilities,
+ContainerLabel,
+ContainerMount,
+ContainerPort,
+ContainerVolume,
 } from "@pulumi/docker/types/output";
 import type { CustomResourceOptions, Input, InvokeOptions, Output, Resource } from "@pulumi/pulumi";
 import { all, ComponentResource, output } from "@pulumi/pulumi";
-import path from "path";
 import { getEnv } from "~lib/env";
-import { MountOpts } from "./mounts";
+
+import type { MountOpts } from "./mounts";
 import { defaultNetwork } from "./networks";
 import { convertPorts } from "./ports";
 import { haringDockerProvider } from "./providers";
@@ -60,6 +62,7 @@ class ContainerService extends ComponentResource {
   public readonly envs: Output<string[]>;
   public readonly capabilities: Output<ContainerCapabilities> | undefined;
   public readonly ports: Output<ContainerPort[]> | undefined;
+  public readonly servicePort: ContainerServiceArgs["servicePort"];
 
   private commandConnection: Input<input.remote.ConnectionArgs>;
   private dependsOn: Resource[];
@@ -199,6 +202,8 @@ class ContainerService extends ComponentResource {
         ...envs,
       }).map(([env, value]) => `${env}=${Array.isArray(value) ? value.join(",") : value}`),
     ]);
+
+    this.servicePort = args.servicePort;
 
     this.ports = args.ports && output(args.ports).apply(convertPorts);
 

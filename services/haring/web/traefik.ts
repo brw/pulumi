@@ -1,8 +1,9 @@
 import { Volume } from "@pulumi/docker";
-import { ContainerService } from "~lib/service/service";
-import { dockerSocket } from "~lib/service/mounts";
 import { getEnv } from "~lib/env";
+import { dockerSocket } from "~lib/service/mounts";
 import { haringDockerProvider } from "~lib/service/providers";
+import { ContainerService } from "~lib/service/service";
+
 import { SECRET_ARGS, SECRET_LABELS } from "./traefik-secrets";
 
 const traefikVolume = new Volume(

@@ -1,6 +1,6 @@
+import { getEnv } from "~lib/env";
 import { nvmeMount, mount } from "~lib/service/mounts";
 import { ContainerService } from "~lib/service/service";
-import { getEnv } from "~lib/env";
 
 export const minecraftMauService = new ContainerService(
   "minecraft-mau",

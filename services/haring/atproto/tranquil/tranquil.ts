@@ -1,13 +1,14 @@
+import path from "path";
+
+import { DnsRecord } from "@pulumi/cloudflare";
+import { remote } from "@pulumi/command";
+import dockerBuild from "@pulumi/docker-build";
 import { asset, interpolate } from "@pulumi/pulumi";
 import { getEnv } from "~lib/env";
+import { fetchRelays } from "~lib/relay-hosts";
 import { _mount, confMount, mount } from "~lib/service/mounts";
 import { ContainerService, defaultConnection } from "~lib/service/service";
-import dockerBuild from "@pulumi/docker-build";
-import { remote } from "@pulumi/command";
 import { getLatestCommit } from "~lib/util";
-import { fetchRelays } from "~lib/relay-hosts";
-import path from "path";
-import { DnsRecord } from "@pulumi/cloudflare";
 
 const tranquilImage = new dockerBuild.Image(
   "tranquil-pds",
@@ -19,11 +20,7 @@ const tranquilImage = new dockerBuild.Image(
     buildArgs: {
       BUILDKIT_CONTEXT_KEEP_GIT_DIR: "true",
     },
-    exports: [
-      {
-        docker: {},
-      },
-    ],
+    exports: [{ docker: {} }],
     push: false,
     buildOnPreview: false,
   },

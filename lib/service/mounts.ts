@@ -1,5 +1,5 @@
-import { ContainerMount } from "@pulumi/docker/types/input";
-import { Input, output, Unwrap } from "@pulumi/pulumi";
+import type { ContainerMount } from "@pulumi/docker/types/input";
+import { type Input, output, type Unwrap } from "@pulumi/pulumi";
 
 type WithOptional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 

@@ -1,10 +1,12 @@
-import { remote } from "@pulumi/command";
-import { asset, ResourceHook } from "@pulumi/pulumi";
 import { exec } from "child_process";
 import path from "path";
+
+import { remote } from "@pulumi/command";
+import { asset, ResourceHook } from "@pulumi/pulumi";
 import { confMount } from "~lib/service/mounts";
 import { defaultNetwork } from "~lib/service/networks";
 import { ContainerService, defaultConnection } from "~lib/service/service";
+
 import { STATIC_IPS } from "../../ips";
 
 const unboundConfMount = confMount("unbound/custom.conf.d", "/etc/unbound/custom.conf.d");

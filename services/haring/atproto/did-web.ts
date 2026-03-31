@@ -1,7 +1,8 @@
-import { ContainerService } from "~lib/service/service";
-import didweb from "./did.json";
 import { DnsRecord } from "@pulumi/cloudflare";
 import { getEnv } from "~lib/env";
+import { ContainerService } from "~lib/service/service";
+
+import didweb from "./did.json";
 
 const CADDYFILE = `
   :80  {

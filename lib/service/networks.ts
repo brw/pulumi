@@ -1,4 +1,5 @@
 import { Network } from "@pulumi/docker";
+
 import { haringDockerProvider } from "./providers";
 
 export const defaultNetwork = new Network(

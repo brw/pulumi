@@ -1,7 +1,8 @@
+import path from "path";
+
 import { DnsRecord } from "@pulumi/cloudflare";
 import { remote } from "@pulumi/command";
-import { asset, interpolate, output } from "@pulumi/pulumi";
-import path from "path";
+import { asset, output } from "@pulumi/pulumi";
 import { getEnv } from "~lib/env";
 import { fetchRelays } from "~lib/relay-hosts";
 import { confMount, ssdcacheMount } from "~lib/service/mounts";

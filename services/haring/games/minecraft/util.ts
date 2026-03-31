@@ -25,6 +25,6 @@ export async function mcHasOnlinePlayers(container: string) {
   } else {
     console.log("assuming no players online");
     return false;
-    // throw new Error(`Failed to parse Minecraft output:\n${output}`);
+    // throw Error(`Failed to parse Minecraft output:\n${output}`);
   }
 }
