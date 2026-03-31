@@ -12,13 +12,3 @@ export const qbittorrentService = new ContainerService("qbittorrent", {
   mounts: [confMount("qbittorrent"), dataMount(), nvmeMount()],
   networkMode: "host",
 });
-
-export const quiService = new ContainerService("qui", {
-  image: "ghcr.io/autobrr/qui",
-  servicePort: 7476,
-  user: "1000:1000",
-  mounts: [confMount("qui"), dataMount(), nvmeMount()],
-  envs: {
-    QUI__METRICS_ENABLED: true,
-  },
-});

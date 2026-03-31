@@ -40,6 +40,7 @@ export * from "./networking/unbound/unbound";
 
 // export * from "./downloaders/jdownloader";
 export * from "./downloaders/qbittorrent";
+export * from "./downloaders/qui";
 export * from "./downloaders/qbittorrent-exporter";
 // export * from "./downloaders/qbittools";
 export * from "./downloaders/sabnzbd";
