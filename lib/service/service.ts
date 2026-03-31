@@ -239,10 +239,14 @@ class ContainerService extends ComponentResource {
           // healthcheck: {tests}
           networksAdvanced: args.networkMode
             ? []
-            : output(args.networksAdvanced ?? []).apply((networksAdvanced) => [
-                ...networksAdvanced,
-                { name: defaultNetwork.name },
-              ]),
+            : all([args.networksAdvanced ?? [], defaultNetwork.name]).apply(
+                ([networksAdvanced, defaultNetworkName]) => [
+                  ...networksAdvanced,
+                  ...(networksAdvanced.some((network) => network.name === defaultNetworkName)
+                    ? []
+                    : [{ name: defaultNetworkName }]),
+                ],
+              ),
           hosts: args.networkMode
             ? []
             : output(args.hosts ?? []).apply((hosts) => [
