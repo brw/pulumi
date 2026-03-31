@@ -76,6 +76,7 @@ export const minecraftRengokuService = new ContainerService(
 
       // server
       TYPE: "FABRIC",
+      FABRIC_LOADER_VERSION: "0.18.6",
       EULA: true,
       VERSION: "1.21.11",
       MOTD: "yeet",
