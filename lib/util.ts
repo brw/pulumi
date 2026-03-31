@@ -19,16 +19,8 @@ const GithubReleaseSchema = z
   .min(1);
 
 export async function getLatestGithubTag(repo: string) {
-  const githubApiToken = await $`gh auth token`.text();
-  const githubApi = ky.create({
-    headers: {
-      Authorization: `Bearer ${githubApiToken}`,
-    },
-    retry: 5,
-  });
-
-  const url = `https://api.github.com/repos/${repo}/tags`;
-  const json = await githubApi(url, { retry: 5 }).json(GithubReleaseSchema);
+  const output = await $`gh api repos/${repo}/tags`.json();
+  const json = GithubReleaseSchema.parse(output);
   assert(json[0]);
   return json[0].name;
 }
