@@ -3,7 +3,7 @@ import { ContainerService } from "~lib/service/service";
 import { dockerSocket } from "~lib/service/mounts";
 import { getEnv } from "~lib/env";
 import { haringDockerProvider } from "~lib/service/providers";
-import { SECRET_LABELS } from "./traefik-secrets";
+import { SECRET_ARGS, SECRET_LABELS } from "./traefik-secrets";
 
 const traefikVolume = new Volume(
   "traefik",
@@ -84,6 +84,7 @@ export const traefikService = new ContainerService(
 
       // "--metrics.otlp=true",
       // `--metrics.otlp.address=`,
+      ...SECRET_ARGS,
     ],
     labels: {
       "traefik.http.middlewares.httpsredirect.redirectscheme.scheme": "https",
