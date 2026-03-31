@@ -11,7 +11,7 @@ const spindleImage = new Image(
     tags: ["spindle:latest"],
     context: {
       // location: "https://tangled.org/tangled.org/knot-docker.git",
-      location: "https://tangled.org/bas.sh/knot-docker.git#spindle",
+      location: "https://tangled.org/bas.sh/knot-docker.git#fork",
     },
     target: "spindle",
     buildArgs: {
@@ -27,7 +27,7 @@ const spindleImage = new Image(
   },
   {
     replacementTrigger: await getLatestCommit(
-      "https://tangled.org/bas.sh/knot-docker/commits/spindle",
+      "https://tangled.org/bas.sh/knot-docker/commits/fork",
     ),
   },
 );
