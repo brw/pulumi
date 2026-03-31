@@ -10,6 +10,7 @@ import { ContainerService, defaultConnection } from "~lib/service/service";
 export const pdsService = new ContainerService("pds", {
   image: "ghcr.io/bluesky-social/pds",
   servicePort: 3000,
+  hostRule: "HostRegexp(`^(.+\\.)?pds.bas.sh$`)",
   mounts: [confMount("pds", "/pds")],
   envs: {
     PDS_HOSTNAME: "pds.bas.sh",
@@ -64,7 +65,7 @@ const CADDYFILE = `
   }
 `;
 
-export const pdsCaddyService = new ContainerService(`pds-web`, {
+export const pdsCaddyService = new ContainerService("pds-web", {
   image: "caddy",
   servicePort: 80,
   hostRule: "Host(`pds.bas.sh`) && (Path(`/`) || Path(`/xrpc/app.bsky.ageassurance.getState`))",

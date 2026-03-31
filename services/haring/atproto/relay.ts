@@ -46,6 +46,41 @@ const relayImage = new dockerBuild.Image(
   },
 );
 
+const RELAY_MOTD = `
+                「Become a magical girl today!」
+                /
+    ／人◕ ‿‿ ◕人＼
+
+
+This is an atproto [https://atproto.com] relay instance, running the 'relay' codebase [https://github.com/bluesky-social/indigo]
+
+The firehose WebSocket path is at:  /xrpc/com.atproto.sync.subscribeRepos
+`;
+
+const CADDYFILE = `
+  :80  {
+    respond "${RELAY_MOTD}" 200
+  }
+`;
+
+export const relayCaddyService = new ContainerService("caddy-relay", {
+  image: "caddy",
+  servicePort: 80,
+  hostRule: "Host(`relay.bas.sh`) && Path(`/`)",
+  hostRulePriority: 1000,
+  command: ["/bin/sh", "-c", `echo '${CADDYFILE}' | caddy run --config - --adapter caddyfile`],
+  middlewares: ["cors"],
+  labels: {
+    "traefik.http.middlewares.relay-favicon.redirectregex.regex":
+      "^https://relay\\.bas\\.sh/favicon\\.ico$",
+    "traefik.http.middlewares.relay-favicon.redirectregex.replacement":
+      "https://tranquil.bas.sh/favicon.ico",
+    "traefik.http.routers.relay-favicon.entrypoints": "https",
+    "traefik.http.routers.relay-favicon.rule": "Host(`relay.bas.sh`) && Path(`/favicon.ico`)",
+    "traefik.http.routers.relay-favicon.middlewares": "cloudflare,relay-favicon",
+  },
+});
+
 export const relayService = new ContainerService(
   "relay",
   {

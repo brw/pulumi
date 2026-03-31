@@ -83,7 +83,7 @@ export const tranquilService = new ContainerService(
   {
     localImage: tranquilImage.digest,
     servicePort: 3000,
-    hostRule: "HostRegexp(`^(.+?\\.)?(t(ranquil)|o(n|f))\\.bas\\.sh`)",
+    hostRule: "HostRegexp(`^(.+?\\.)?(t(ranquil)|o(n|f))\\.bas\\.sh$`)",
     mounts: [
       confMount("tranquil/backups", "/var/lib/tranquil/backups"),
       confMount("tranquil/blobs", "/var/lib/tranquil/blobs"),

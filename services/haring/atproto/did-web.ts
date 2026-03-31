@@ -11,7 +11,7 @@ const CADDYFILE = `
   }
 `;
 
-export const didwebCaddyService = new ContainerService("didweb", {
+export const didwebCaddyService = new ContainerService("caddy-didweb", {
   image: "caddy",
   servicePort: 80,
   hostRule: "Host(`bas.sh`) && Path(`/.well-known/did.json`)",

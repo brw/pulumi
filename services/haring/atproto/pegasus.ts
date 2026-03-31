@@ -7,7 +7,7 @@ import { ContainerService } from "~lib/service/service";
 export const pegasusService = new ContainerService("pegasus", {
   image: "ghcr.io/futurgh/pegasus",
   servicePort: 8008,
-  hostRule: "HostRegexp(`^(.+?\\.)?pegasus\\.bas\\.sh`)",
+  hostRule: "HostRegexp(`^(.+?\\.)?pegasus\\.bas\\.sh$`)",
   mounts: [confMount("pegasus", "/data")],
   envs: {
     PSD_LOG_LEVEL: "info",
