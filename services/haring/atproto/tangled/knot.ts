@@ -32,7 +32,10 @@ const knotImage = new Image(
 
 export const knotMotd = new remote.CopyToRemote("knot-motd", {
   connection: defaultConnection,
-  source: new asset.StringAsset("／人◕ ‿‿ ◕人＼ 📝\n"),
+  source: new asset.StringAsset(
+    `        ／人◕ ‿‿ ◕人＼
+  \x1B[2mThe contract has been made.\x1B[22m\n`,
+  ),
   remotePath: "/home/bas/docker/knot/motd",
 });
 
