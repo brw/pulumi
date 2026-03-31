@@ -1,7 +1,7 @@
 import { DnsRecord } from "@pulumi/cloudflare";
 import { Image } from "@pulumi/docker-build";
 import { getEnv } from "~lib/env";
-import { dockerSocketRw, nvmeMount } from "~lib/service/mounts";
+import { confMount, dockerSocketRw, nvmeMount } from "~lib/service/mounts";
 import { ContainerService } from "~lib/service/service";
 import { getLatestTangledCommit } from "~lib/util";
 
@@ -31,7 +31,11 @@ const spindleImage = new Image(
 export const spindleService = new ContainerService("spindle", {
   localImage: spindleImage.digest,
   servicePort: 6555,
-  mounts: [nvmeMount("spindle", "/app"), dockerSocketRw],
+  mounts: [
+    confMount("spindle/logs", "/var/log/spindle"),
+    nvmeMount("spindle", "/app"),
+    dockerSocketRw,
+  ],
   envs: {
     SPINDLE_SERVER_HOSTNAME: "spindle.bas.sh",
     SPINDLE_SERVER_OWNER: getEnv("ATPROTO_DID"),
