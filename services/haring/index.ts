@@ -72,9 +72,8 @@ export * from "./communication/thelounge";
 // export * from "./games/blockheads";
 // export * from "./games/hytale";
 // export * from "./games/terraria";
-export * from "./games/minecraft/servers/akio";
+// export * from "./games/minecraft/servers/akio";
 export * from "./games/minecraft/servers/rengoku";
-export * from "./games/minecraft/rcon";
 
 export * from "./remote/czkawka";
 export * from "./remote/mkvtoolnix";
