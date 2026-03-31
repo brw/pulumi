@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["import", "node", "eslint", "typescript", "oxc", "promise"],
-  //"jsPlugins": ["@pulumi/eslint-plugin"],
+  "jsPlugins": ["@pulumi/eslint-plugin"],
   "rules": {
     "no-unused-vars": "off"
   }
