@@ -56,6 +56,7 @@ export * from "./files/sftpgo";
 export * from "./files/stash";
 export * from "./files/synclounge";
 
+export * from "./atproto/did-web";
 export * from "./atproto/tranquil/tranquil";
 export * from "./atproto/pegasus";
 export * from "./atproto/pds/pds";
