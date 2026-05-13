@@ -5,7 +5,7 @@ export const haringDockerProvider = new Provider("haring", {
   context: "haring",
 });
 
-export const kaneelnasDockerProvider = new Provider("kaneelnas", {
-  host: "ssh://kaneelnas",
-  context: "kaneelnas",
-});
+// export const kaneelnasDockerProvider = new Provider("kaneelnas", {
+//   host: "ssh://kaneelnas",
+//   context: "kaneelnas",
+// });

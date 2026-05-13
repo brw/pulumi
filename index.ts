@@ -1,2 +1,2 @@
 import "./services/haring";
-import "./services/kaneelnas";
+// import "./services/kaneelnas";
