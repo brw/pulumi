@@ -1,5 +1,5 @@
+import { ContainerService } from "~lib/service";
 import { confMount, dataMount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 export const sonarrService = new ContainerService("sonarr", {
   servicePort: 8989,

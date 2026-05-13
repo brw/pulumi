@@ -1,6 +1,6 @@
 import { getEnv } from "~lib/env";
+import { ContainerService } from "~lib/service";
 import { nvmeMount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 export const terrariaService = new ContainerService("terraria", {
   image: "passivelemon/terraria-docker:terraria-1.4.5",

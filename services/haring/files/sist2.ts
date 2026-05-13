@@ -1,5 +1,5 @@
+import { ContainerService } from "~lib/service";
 import { confMount, ssdcacheMount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 export const sist2Service = new ContainerService("sist2", {
   image: "sist2app/sist2:x64-linux",

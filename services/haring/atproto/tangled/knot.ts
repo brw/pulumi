@@ -1,10 +1,8 @@
 import { DnsRecord } from "@pulumi/cloudflare";
-import { remote } from "@pulumi/command";
 import { Image } from "@pulumi/docker-build";
-import { asset } from "@pulumi/pulumi";
 import { getEnv } from "~lib/env";
-import { confMount, mount, nvmeMount } from "~lib/service/mounts";
-import { ContainerService, defaultConnection } from "~lib/service/service";
+import { ContainerService } from "~lib/service";
+import { confMount, nvmeMount } from "~lib/service/mounts";
 import { getLatestTangledCommit } from "~lib/util";
 
 const knotImage = new Image(
@@ -30,30 +28,67 @@ const knotImage = new Image(
   },
 );
 
-export const knotMotd = new remote.CopyToRemote("knot-motd", {
-  connection: defaultConnection,
-  source: new asset.StringAsset(
-    `        ／人◕ ‿‿ ◕人＼
-  \x1B[2mThe contract has been made.\x1B[22m\n`,
-  ),
-  remotePath: "/home/bas/docker/knot/motd",
-});
+const KNOT_GIT_MOTD = `         ／人◕ ‿‿ ◕人＼
+  \x1B[2mYour contract has been made.\x1B[22m\n`;
 
 export const knotService = new ContainerService("knot", {
   localImage: knotImage.digest,
   servicePort: 5555,
   ports: [22],
-  mounts: [
-    confMount("knot", "/app"),
-    mount(knotMotd.remotePath, "/home/git/motd", { kind: "file" }),
-    nvmeMount("knot", "/home/git/repositories"),
-  ],
+  mounts: [confMount("knot", "/app"), nvmeMount("knot", "/home/git/repositories")],
   volumes: [{ volumeName: "knot-keys", containerPath: "/etc/ssh/keys" }],
   envs: {
     KNOT_SERVER_HOSTNAME: "knot.bas.sh",
     KNOT_SERVER_OWNER: getEnv("ATPROTO_DID"),
     KNOT_SERVER_DB_PATH: "/app/knotserver.db",
     KNOT_SERVER_INTERNAL_LISTEN_ADDR: "localhost:5444",
+  },
+  uploads: [{ content: KNOT_GIT_MOTD, file: "/home/git/motd" }],
+});
+
+const KNOT_WEB_MOTD = `
+           ⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⡀
+           ⠀⠀⠀⠀⠀⠀⠀⠀⠀⣾⠙⠻⢶⣄⡀⠀⠀⠀⢀⣤⠶⠛⠛⡇
+           ⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣇⠀⠀⣙⣿⣦⣤⣴⣿⣁⠀⠀⣸⠇
+           ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⣡⣾⣿⣿⣿⣿⣿⣿⣿⣷⣌⠋⠀
+           ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣴⣿⣷⣄⡈⢻⣿⡟⢁⣠⣾⣿⣦⠀
+           ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣿⣿⣿⣿⠘⣿⠃⣿⣿⣿⣿⡏⠀
+           ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠈⠛⣰⠿⣆⠛⠁⠀⡀⠀⠀
+           ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣼⣿⣦⠀⠘⠛⠋⠀⣴⣿⠁⠀⠀
+           ⠀⠀⠀⠀⠀⠀⣀⣤⣶⣾⣿⣿⣿⣿⡇⠀⠀⠀⢸⣿⣏⠀⠀⠀
+           ⠀⠀⠀⣠⣶⣿⣿⣿⣿⣿⣿⣿⣿⠿⠿⠀⠀⠀⠾⢿⣿⠀⠀⠀
+           ⠀⣠⣿⣿⣿⣿⣿⣿⡿⠟⠋⣁⣠⣤⣤⡶⠶⠶⣤⣄⠈⠀⠀⠀
+           ⢰⣿⣿⣮⣉⣉⣉⣤⣴⣶⣿⣿⣋⡥⠄⠀⠀⠀⠀⠉⢻⣄⠀⠀
+           ⠸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣟⣋⣁⣤⣀⣀⣤⣤⣤⣤⣄⣿⡄⠀
+           ⠀⠙⠿⣿⣿⣿⣿⣿⣿⣿⡿⠿⠛⠋⠉⠁⠀⠀⠀⠀⠈⠛⠃⠀
+           ⠀⠀⠀⠀⠉⠉⠉⠉⠉
+
+This is a knot server. More info at https://docs.tangled.org/knot-self-hosting-guide
+
+Most API routes are under /xrpc/
+`.slice(1);
+
+const CADDYFILE = `
+  :80 {
+    respond "${KNOT_WEB_MOTD}" 200
+  }
+`;
+
+export const knotCaddyService = new ContainerService("knot-web", {
+  image: "caddy",
+  servicePort: 80,
+  hostRule: "Host(`knot.bas.sh`) && Path(`/`)",
+  hostRulePriority: 1000,
+  command: ["/bin/sh", "-c", `echo '${CADDYFILE}' | caddy run --config - --adapter caddyfile`],
+  middlewares: ["cors"],
+  labels: {
+    "traefik.http.middlewares.knot-favicon.redirectregex.regex":
+      "^https://knot\\.bas\\.sh/favicon\\.ico$",
+    "traefik.http.middlewares.knot-favicon.redirectregex.replacement":
+      "https://tranquil.bas.sh/favicon.ico",
+    "traefik.http.routers.knot-favicon.entrypoints": "https",
+    "traefik.http.routers.knot-favicon.rule": "Host(`knot.bas.sh`) && Path(`/favicon.ico`)",
+    "traefik.http.routers.knot-favicon.middlewares": "cloudflare,knot-favicon",
   },
 });
 

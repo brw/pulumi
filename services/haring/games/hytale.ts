@@ -1,5 +1,5 @@
+import { ContainerService } from "~lib/service";
 import { mount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 export const hytaleService = new ContainerService("hytale", {
   image: "hybrowse/hytale-server",

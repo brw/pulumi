@@ -1,5 +1,5 @@
+import { ContainerService } from "~lib/service";
 import { confMount, mount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 export const scrutinyService = new ContainerService("scrutiny", {
   image: "ghcr.io/analogj/scrutiny:master-omnibus",

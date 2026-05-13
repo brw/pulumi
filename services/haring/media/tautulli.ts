@@ -1,5 +1,5 @@
+import { ContainerService } from "~lib/service";
 import { confMount, gitMount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 export const tautulliService = new ContainerService("tautulli", {
   servicePort: 8181,

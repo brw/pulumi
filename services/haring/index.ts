@@ -6,6 +6,7 @@ export * from "./media/plex";
 export * from "./media/tautulli";
 export * from "./media/sonarr";
 export * from "./media/radarr";
+export * from "./media/reclaimerr";
 export * from "./media/jackett";
 export * from "./media/prowlarr";
 export * from "./media/seerr";
@@ -31,6 +32,7 @@ export * from "./monitoring/grafana";
 export * from "./monitoring/prometheus";
 export * from "./monitoring/scrutiny";
 export * from "./monitoring/uptimekuma";
+export * from "./monitoring/victoriametrics";
 
 // export * from "./networking/dnsmasq";
 export * from "./networking/tailscale";
@@ -45,7 +47,7 @@ export * from "./downloaders/qbittorrent-exporter";
 // export * from "./downloaders/qbittools";
 export * from "./downloaders/sabnzbd";
 
-export * from "./files/filebrowser";
+// export * from "./files/filebrowser";
 export * from "./files/filestash";
 export * from "./files/h5ai";
 // export * from "./files/nextcloud";
@@ -85,6 +87,7 @@ export * from "./remote/sealskin";
 export * from "./other/anki";
 // export * from "./other/kopia";
 export * from "./other/librespeed";
+export * from "./other/ncps";
 export * from "./other/pixiv";
 export * from "./other/prunemate";
 

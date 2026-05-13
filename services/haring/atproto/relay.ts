@@ -1,15 +1,15 @@
-import dockerBuild from "@pulumi/docker-build";
+import { Image } from "@pulumi/docker-build";
 import { interpolate } from "@pulumi/pulumi";
 import { getEnv } from "~lib/env";
+import { ContainerService } from "~lib/service";
 import { confMount, nvmeMount } from "~lib/service/mounts";
 import { defaultNetwork } from "~lib/service/networks";
-import { ContainerService } from "~lib/service/service";
 import { getGithubContents } from "~lib/util";
 
 import { STATIC_IPS } from "../ips";
 import { unboundService } from "../networking/unbound/unbound";
 
-const postgresRelayService = new ContainerService("postgres-relay", {
+export const postgresRelayService = new ContainerService("postgres-relay", {
   image: "postgres",
   mounts: [confMount("postgres-relay", "/var/lib/postgresql")],
   envs: {
@@ -19,7 +19,7 @@ const postgresRelayService = new ContainerService("postgres-relay", {
   networksAdvanced: [{ name: defaultNetwork.name, ipv4Address: STATIC_IPS.POSTGRES_RELAY }],
 });
 
-const relayImage = new dockerBuild.Image(
+const relayImage = new Image(
   "relay",
   {
     tags: ["relay:latest"],
@@ -42,15 +42,26 @@ const relayImage = new dockerBuild.Image(
 );
 
 const RELAY_MOTD = `
-                「Become a magical girl today!」
-                /
-    ／人◕ ‿‿ ◕人＼
-
+           ⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⡀
+           ⠀⠀⠀⠀⠀⠀⠀⠀⠀⣾⠙⠻⢶⣄⡀⠀⠀⠀⢀⣤⠶⠛⠛⡇
+           ⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣇⠀⠀⣙⣿⣦⣤⣴⣿⣁⠀⠀⣸⠇
+           ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⣡⣾⣿⣿⣿⣿⣿⣿⣿⣷⣌⠋⠀
+           ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣴⣿⣷⣄⡈⢻⣿⡟⢁⣠⣾⣿⣦⠀
+           ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣿⣿⣿⣿⠘⣿⠃⣿⣿⣿⣿⡏⠀
+           ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠈⠛⣰⠿⣆⠛⠁⠀⡀⠀⠀
+           ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣼⣿⣦⠀⠘⠛⠋⠀⣴⣿⠁⠀⠀
+           ⠀⠀⠀⠀⠀⠀⣀⣤⣶⣾⣿⣿⣿⣿⡇⠀⠀⠀⢸⣿⣏⠀⠀⠀
+           ⠀⠀⠀⣠⣶⣿⣿⣿⣿⣿⣿⣿⣿⠿⠿⠀⠀⠀⠾⢿⣿⠀⠀⠀
+           ⠀⣠⣿⣿⣿⣿⣿⣿⡿⠟⠋⣁⣠⣤⣤⡶⠶⠶⣤⣄⠈⠀⠀⠀
+           ⢰⣿⣿⣮⣉⣉⣉⣤⣴⣶⣿⣿⣋⡥⠄⠀⠀⠀⠀⠉⢻⣄⠀⠀
+           ⠸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣟⣋⣁⣤⣀⣀⣤⣤⣤⣤⣄⣿⡄⠀
+           ⠀⠙⠿⣿⣿⣿⣿⣿⣿⣿⡿⠿⠛⠋⠉⠁⠀⠀⠀⠀⠈⠛⠃⠀
+           ⠀⠀⠀⠀⠉⠉⠉⠉⠉
 
 This is an atproto [https://atproto.com] relay instance, running the 'relay' codebase [https://github.com/bluesky-social/indigo]
 
 The firehose WebSocket path is at:  /xrpc/com.atproto.sync.subscribeRepos
-`;
+`.slice(1);
 
 const CADDYFILE = `
   :80  {
@@ -79,7 +90,7 @@ export const relayCaddyService = new ContainerService("caddy-relay", {
 export const relayService = new ContainerService(
   "relay",
   {
-    localImage: interpolate`${relayImage.ref}@${relayImage.digest}`,
+    localImage: relayImage.digest,
     servicePort: 2470,
     networkMode: "host",
     mounts: [nvmeMount("relay", "/data/relay/persist")],
@@ -87,13 +98,14 @@ export const relayService = new ContainerService(
     dns: [STATIC_IPS.UNBOUND],
     envs: {
       RELAY_ADMIN_PASSWORD: getEnv("RELAY_ADMIN_PASSWORD"),
-      DATABASE_URL: interpolate`postgres://postgres:${getEnv("POSTGRES_PASSWORD")}@${postgresRelayService.ip}/relay`,
+      DATABASE_URL: interpolate`postgres://postgres:${getEnv("POSTGRES_PASSWORD")}@${STATIC_IPS.POSTGRES_RELAY}/relay`,
       RELAY_PERSIST_DIR: "/data/relay/persist",
-      RELAY_REPLAY_WINDOW: "24h",
+      RELAY_REPLAY_WINDOW: "36h",
       RELAY_LENIENT_SYNC_VALIDATION: true,
-      MAX_DB_CONNECTIONS: 80,
-      RELAY_HOST_CONCURRENCY: 80,
-      RELAY_DEFAULT_REPO_LIMIT: 1000,
+      // MAX_DB_CONNECTIONS: 80,
+      // RELAY_HOST_CONCURRENCY: 80,
+      RELAY_NEW_HOSTS_PER_DAY_LIMIT: 200,
+      RELAY_DEFAULT_REPO_LIMIT: 100000,
       RELAY_TRUSTED_DOMAINS: [
         "*.host.bsky.network",
         "atproto.brid.gy",

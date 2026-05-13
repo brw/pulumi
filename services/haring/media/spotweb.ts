@@ -1,5 +1,5 @@
+import { ContainerService } from "~lib/service";
 import { confMount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 export const spotwebService = new ContainerService("spotweb", {
   image: "erikdevries/spotweb",

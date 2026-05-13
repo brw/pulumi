@@ -1,5 +1,5 @@
+import { ContainerService } from "~lib/service";
 import { confMount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 const tracearrService = new ContainerService("tracearr", {
   image: "ghcr.io/connorgallopo/tracearr:supervised",

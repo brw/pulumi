@@ -1,4 +1,4 @@
-import { ContainerService } from "~lib/service/service";
+import { ContainerService } from "~lib/service";
 
 export const syncloungeService = new ContainerService("synclounge", {
   servicePort: 8088,

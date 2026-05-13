@@ -1,5 +1,5 @@
+import { ContainerService } from "~lib/service";
 import { dockerSocket } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 export const glancesService = new ContainerService("glances", {
   image: "nicolargo/glances",

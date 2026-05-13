@@ -1,7 +1,7 @@
 import { interpolate } from "@pulumi/pulumi";
 import { getEnv } from "~lib/env";
+import { ContainerService } from "~lib/service";
 import { confMount, dataMount, mount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 export const kopiaService = new ContainerService("kopia", {
   image: "kopia/kopia",

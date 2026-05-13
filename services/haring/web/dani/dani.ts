@@ -1,11 +1,11 @@
+import { ContainerService } from "~lib/service";
 import { ssdcacheMount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 const CADDYFILE = `
   :80 {}
 `;
 
-export const caddyFileserverService = new ContainerService(`caddy-dani`, {
+export const caddyFileserverService = new ContainerService("caddy-dani", {
   image: "caddy",
   servicePort: 80,
   subdomain: "dani",

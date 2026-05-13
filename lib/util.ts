@@ -1,11 +1,17 @@
 import assert from "assert";
 
+import type { Input, Output } from "@pulumi/pulumi";
 import { $ } from "bun";
 import ky from "ky";
 import z from "zod";
 
 export async function getLatestTangledCommit(url: string) {
-  const html = await ky(url, { retry: 5 }).text();
+  const html = await ky(url, {
+    retry: {
+      limit: 10,
+      retryOnTimeout: true,
+    },
+  }).text();
   const commit = html.match(/\/commit\/(\w+)/)?.[1];
   return commit;
 }
@@ -33,3 +39,10 @@ export function ensure<T>(arg: T): NonNullable<T> {
   assert(arg);
   return arg;
 }
+
+// export function prefix<T extends Record<string, unknown>>(prefix: string, obj: T): T {
+//   return Object.fromEntries(Object.entries(obj).map(([key, value]) => [`${prefix}_${key}`, value]));
+// }
+
+export const toHostRule = (domains: string[]) =>
+  domains.map((domain) => `Host(\`${domain}\`)`).join(" || ");

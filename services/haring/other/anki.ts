@@ -1,5 +1,5 @@
+import { ContainerService } from "~lib/service";
 import { confMount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 export const ankiService = new ContainerService("anki", {
   image: "ankicommunity/anki-sync-server:latest-develop",

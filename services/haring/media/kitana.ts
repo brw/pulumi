@@ -1,4 +1,4 @@
-import { ContainerService } from "~lib/service/service";
+import { ContainerService } from "~lib/service";
 
 export const kitanaService = new ContainerService("kitana", {
   image: "pannal/kitana",

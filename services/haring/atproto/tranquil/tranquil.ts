@@ -1,22 +1,25 @@
-import path from "path";
-
 import { DnsRecord } from "@pulumi/cloudflare";
-import { remote } from "@pulumi/command";
-import dockerBuild from "@pulumi/docker-build";
-import { asset, interpolate } from "@pulumi/pulumi";
+import { Image } from "@pulumi/docker-build";
+import { interpolate } from "@pulumi/pulumi";
 import { getEnv } from "~lib/env";
 import { fetchRelays } from "~lib/relay-hosts";
-import { _mount, confMount, mount } from "~lib/service/mounts";
-import { ContainerService, defaultConnection } from "~lib/service/service";
-import { getLatestTangledCommit } from "~lib/util";
+import { ContainerService } from "~lib/service";
+import { confMount } from "~lib/service/mounts";
+import { getLatestTangledCommit, toHostRule } from "~lib/util";
 
-const tranquilImage = new dockerBuild.Image(
+const tranquilImage = new Image(
   "tranquil-pds",
   {
     tags: ["tranquil-pds:latest"],
     context: {
       location: "https://tangled.org/tranquil.farm/tranquil-pds.git",
     },
+    // platforms: [
+    //   dockerBuild.Platform.Linux_amd64,
+    //   dockerBuild.Platform.Linux_arm64,
+    //   dockerBuild.Platform.Darwin_amd64,
+    //   dockerBuild.Platform.Darwin_arm64,
+    // ],
     buildArgs: {
       BUILDKIT_CONTEXT_KEEP_GIT_DIR: "true",
     },
@@ -44,39 +47,42 @@ const postgresTranquilService = new ContainerService("postgres-tranquil", {
   },
 });
 
-const PDS_USER_HANDLE_DOMAINS = ["tranquil.bas.sh", "t.bas.sh", "on.bas.sh", "of.bas.sh"];
-for (const host of PDS_USER_HANDLE_DOMAINS) {
-  new DnsRecord(`tranquil-${host}`, {
-    zoneId: getEnv("CLOUDFLARE_ZONE_ID"),
-    name: host,
-    ttl: 1,
-    type: "CNAME",
-    content: "haring.bas.sh",
-    proxied: false,
-  });
-  new DnsRecord(`tranquil-wildcard-${host}`, {
-    zoneId: getEnv("CLOUDFLARE_ZONE_ID"),
-    name: `*.${host}`,
-    ttl: 1,
-    type: "CNAME",
-    content: "tranquil.bas.sh",
-    proxied: false,
-  });
+const SUBDOMAINS = ["tranquil", "t", "on", "of"];
+const HANDLE_DOMAINS = SUBDOMAINS.map((subdomain) => `${subdomain}.bas.sh`);
+const WILDCARD_HOSTS = HANDLE_DOMAINS.map((domain) => `*.${domain}`);
+
+for (const host of [...HANDLE_DOMAINS, ...WILDCARD_HOSTS]) {
+  new DnsRecord(
+    `tranquil-${host}`,
+    {
+      zoneId: getEnv("CLOUDFLARE_ZONE_ID"),
+      name: host,
+      ttl: 1,
+      type: "CNAME",
+      content: "haring.bas.sh",
+      proxied: false,
+    },
+    {
+      aliases: [
+        {
+          name: host.includes("*")
+            ? `tranquil-${host.replace("*.", "wildcard-")}`
+            : `tranquil-${host}`,
+        },
+      ],
+    },
+  );
 }
 
 export const tranquilService = new ContainerService("tranquil", {
   localImage: tranquilImage.digest,
   servicePort: 3000,
-  hostRule: "HostRegexp(`^(.+?\\.)?(t(ranquil)|o(n|f))\\.bas\\.sh$`)",
-  mounts: [
-    confMount("tranquil/backups", "/var/lib/tranquil/backups"),
-    confMount("tranquil/blobs", "/var/lib/tranquil/blobs"),
-  ],
+  hostRule: `Host(\`tranquil.bas.sh\`) || ((${toHostRule(WILDCARD_HOSTS)}) && PathPrefix(\`/.well-known\`))`,
+  mounts: [confMount("tranquil/blobs", "/var/lib/tranquil/blobs")],
   envs: {
     DATABASE_URL: interpolate`postgres://postgres:${getEnv("POSTGRES_PASSWORD")}@${postgresTranquilService.container.name}/pds`,
     PDS_HOSTNAME: "tranquil.bas.sh",
     BLOB_STORAGE_PATH: "/var/lib/tranquil/blobs",
-    BACKUP_STORAGE_PATH: "/var/lib/tranquil/backups",
     JWT_SECRET: getEnv("TRANQUIL_JWT_SECRET"),
     DPOP_SECRET: getEnv("TRANQUIL_DPOP_SECRET"),
     MASTER_KEY: getEnv("TRANQUIL_MASTER_KEY"),
@@ -90,27 +96,23 @@ export const tranquilService = new ContainerService("tranquil", {
     DISCORD_BOT_TOKEN: getEnv("TRANQUIL_DISCORD_BOT_TOKEN"),
     INVITE_CODE_REQUIRED: true,
     ACCEPTING_REPO_IMPORTS: true,
-    PDS_USER_HANDLE_DOMAINS,
+    PDS_USER_HANDLE_DOMAINS: HANDLE_DOMAINS,
     CONTACT_EMAIL: getEnv("EMAIL"),
     PDS_AGE_ASSURANCE_OVERRIDE: true,
     CRAWLERS: fetchRelays(),
   },
   labels: {
-    "traefik.http.middlewares.tranquil-redirect.redirectregex.regex":
-      "^https://(t|on)\\.bas\\.sh/(.*)$",
-    "traefik.http.middlewares.tranquil-redirect.redirectregex.replacement":
-      "https://tranquil.bas.sh/${2}",
-    "traefik.http.routers.tranquil-redirect.entrypoints": "https",
-    "traefik.http.routers.tranquil-redirect.rule": "HostRegexp(`^(t|on)\\.bas\\.sh$`)",
-    "traefik.http.routers.tranquil-redirect.middlewares": "cloudflare,tranquil-redirect",
+    "traefik.http.middlewares.tranquil-main-redirect.redirectregex.regex": `^.+?\\.bas.sh/(.*)?$`,
+    "traefik.http.middlewares.tranquil-main-redirect.redirectregex.replacement":
+      "https://tranquil.bas.sh/${1}",
+    "traefik.http.routers.tranquil-main-redirect.entrypoints": "https",
+    "traefik.http.routers.tranquil-main-redirect.rule": toHostRule(HANDLE_DOMAINS.slice(1)),
+    "traefik.http.routers.tranquil-main-redirect.middlewares": "cloudflare,tranquil-main-redirect",
+    "traefik.http.routers.tranquil-main-redirect.priority": 1000,
 
-    "traefik.http.middlewares.tranquil-user-redirect.redirectregex.regex":
-      "^https://(.+\\.(t(ranquil)?|o(n|f))\\.bas\\.sh)/(.*)$",
-    "traefik.http.middlewares.tranquil-user-redirect.redirectregex.replacement":
-      "https://bsky.app/profile/${1}",
     "traefik.http.routers.tranquil-user-redirect.entrypoints": "https",
-    "traefik.http.routers.tranquil-user-redirect.rule":
-      "HostRegexp(`^.+\\.(t(ranquil)?|o(n|f))\\.bas\\.sh$`) && !PathPrefix(`/.well-known`)",
-    "traefik.http.routers.tranquil-user-redirect.middlewares": "cloudflare,tranquil-user-redirect",
+    "traefik.http.routers.tranquil-user-redirect.rule": `(${toHostRule(WILDCARD_HOSTS)}) && !PathPrefix(\`/.well-known\`)`,
+    "traefik.http.routers.tranquil-user-redirect.middlewares": "cloudflare,bsky-user-redirect",
+    "traefik.http.routers.tranquil-user-redirect.priority": 1000,
   },
 });

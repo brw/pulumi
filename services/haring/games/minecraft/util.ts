@@ -1,4 +1,4 @@
-import { ContainerService } from "~lib/service/service";
+import { ContainerService } from "~lib/service";
 
 export async function mcHasOnlinePlayers(container: string) {
   let listPlayersCmd;

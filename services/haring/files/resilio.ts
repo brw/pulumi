@@ -1,5 +1,5 @@
+import { ContainerService } from "~lib/service";
 import { confMount, ssdcacheMount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 export const resilioSyncService = new ContainerService("resilio-sync", {
   subdomain: "sync",

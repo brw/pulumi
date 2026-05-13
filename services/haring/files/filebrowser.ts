@@ -1,6 +1,6 @@
 import { getEnv } from "~lib/env";
+import { ContainerService } from "~lib/service";
 import { confMount, ssdcacheMount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 export const filebrowserService = new ContainerService("filebrowser", {
   image: "ghcr.io/gtsteffaniak/filebrowser:beta",

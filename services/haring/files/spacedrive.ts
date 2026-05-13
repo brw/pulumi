@@ -1,7 +1,7 @@
 import { interpolate } from "@pulumi/pulumi";
 import { getEnv } from "~lib/env";
+import { ContainerService } from "~lib/service";
 import { confMount, ssdcacheMount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 export const spacedriveService = new ContainerService("spacedrive", {
   image: "ghcr.io/spacedriveapp/spacedrive/server",

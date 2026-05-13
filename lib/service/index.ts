@@ -88,7 +88,7 @@ class ContainerService extends ComponentResource {
         new RemoteImage(
           `${name}`,
           {
-            name: output(args.image ?? `lscr.io/linuxserver/${name}`).apply(async (image) => {
+            name: output(args.image).apply(async (image = `lscr.io/linuxserver/${name}`) => {
               if (!image.match(/\..+\//)) {
                 image = `mirror.gcr.io/${image}`;
               }
@@ -119,6 +119,7 @@ class ContainerService extends ComponentResource {
         return mounts;
       });
 
+    // @ts-expect-error
     this.volumes = args.volumes && output(args.volumes);
 
     this.localUrl = all([args.networkMode, args.servicePort]).apply(([networkMode, servicePort]) =>
@@ -131,6 +132,7 @@ class ContainerService extends ComponentResource {
       ([hostRule, subdomain]) => hostRule ?? `${subdomain ?? name}.bas.sh`,
     );
 
+    let idx = 0;
     const createLabels = all([
       args.middlewares ?? [],
       args.hostRulePriority,
@@ -138,7 +140,8 @@ class ContainerService extends ComponentResource {
       this.localUrl,
     ]).apply(([middlewares, hostRulePriority, monitor, localUrl]) => {
       return (host: string, port: string | number) => {
-        const id = host.replaceAll(/[^\w]+/g, "-");
+        const id = idx === 0 ? name : `${name}-${idx}`;
+        idx++;
 
         const labels = {
           "traefik.enable": "true",
@@ -239,8 +242,8 @@ class ContainerService extends ComponentResource {
           // healthcheck: {tests}
           networksAdvanced: args.networkMode
             ? []
-            : all([args.networksAdvanced ?? [], defaultNetwork.name]).apply(
-                ([networksAdvanced, defaultNetworkName]) => [
+            : all([args.networksAdvanced, defaultNetwork.name]).apply(
+                ([networksAdvanced = [], defaultNetworkName]) => [
                   ...networksAdvanced,
                   ...(networksAdvanced.some((network) => network.name === defaultNetworkName)
                     ? []
@@ -249,7 +252,7 @@ class ContainerService extends ComponentResource {
               ),
           hosts: args.networkMode
             ? []
-            : output(args.hosts ?? []).apply((hosts) => [
+            : output(args.hosts).apply((hosts = []) => [
                 { host: "host.docker.internal", ip: "host-gateway" },
                 ...hosts,
               ]),

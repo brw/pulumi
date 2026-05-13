@@ -1,5 +1,5 @@
+import { ContainerService } from "~lib/service";
 import { ssdcacheMount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 const mcWebService = new ContainerService("mc-web", {
   image: "caddy",

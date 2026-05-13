@@ -1,6 +1,6 @@
 import { getEnv } from "~lib/env";
+import { ContainerService } from "~lib/service";
 import { nvmeMount, mount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 import { mcHasOnlinePlayers } from "../util";
 
@@ -77,10 +77,10 @@ export const minecraftRengokuService = new ContainerService(
 
       // server
       TYPE: "FABRIC",
-      FABRIC_LOADER_VERSION: "0.18.6",
+      // FABRIC_LOADER_VERSION: "0.18.6",
       EULA: true,
       VERSION: "1.21.11",
-      MOTD: "yeet",
+      MOTD: " \u00A74♥ \u00A76Rengoku \u00A74♥",
       DIFFICULTY: "normal",
       ICON: "https://i.bas.sh/rengoku.jpg",
       OVERRIDE_ICON: true,
@@ -93,7 +93,6 @@ export const minecraftRengokuService = new ContainerService(
       ENABLE_WHITELIST: false,
       ENFORCE_WHITELIST: false,
       WHITELIST: ["basw"],
-      ENABLE_SSH: true,
       RCON_PASSWORD: getEnv("RCON_PASSWORD"),
       BROADCAST_RCON_TO_OPS: false,
       BROADCAST_CONSOLE_TO_OPS: false,
@@ -124,11 +123,8 @@ export const minecraftRengokuService = new ContainerService(
         // "https://cdn.modrinth.com/data/izSO2Rn2/versions/vwYeKHZy/cabbage-substances-1.3.0.2-0.11.1.zip",
       ],
       MODS: [
-        "https://github.com/DrexHD/remove-dialog-warning/releases/download/1.2.0/remove-dialog-warning-1.2.0.jar",
         // "https://cdn.modrinth.com/data/5OyO3XKw/versions/lOxOcQ5K/ultimate-roleplay-kit-urk-hats-v3.0.0-beta.jar",
         // "https://cdn.modrinth.com/data/tpBja9mt/versions/ifAYWMMc/ultimate-roleplay-kit-mail-urk-mail-v3.0.0beta.jar",
-        "https://cdn.modrinth.com/data/EltpO5cN/versions/NKsNpTwe/lootr-fabric-1.21.11-1.19.33.100.jar",
-        "https://cdn.modrinth.com/data/mhlzUYFC/versions/FqHMeEkR/LootrPolymer-1.1.jar",
       ],
       MODRINTH_PROJECTS: [
         // libraries
@@ -202,7 +198,7 @@ export const minecraftRengokuService = new ContainerService(
         // "melius-worldmanager",
         "simple-registry-aliases",
         "ledger",
-        "command-maker",
+        // "command-maker",
         "melius-commands",
         "offlinecommands",
         // "modify-player-data",
@@ -210,6 +206,7 @@ export const minecraftRengokuService = new ContainerService(
         "stdrdc",
         "fabricexporter",
         "otel-instrumentation-extension",
+        "nice-admin-tools",
 
         // networking
         "no-chat-reports",
@@ -260,8 +257,8 @@ export const minecraftRengokuService = new ContainerService(
         // "morecatvariants",
         "friends-and-foes-polymer",
         // "mini-vfx",
-        // "lootr-polymer-patch",
-        // "lootr:NKsNpTwe",
+        "lootr-polymer-patch",
+        "lootr",
         "more-tools",
         "polynutrition",
         // "notenoughminecraft",
@@ -297,7 +294,7 @@ export const minecraftRengokuService = new ContainerService(
         // "view-distance-fix",
         "rail-placement-fix",
         "disconnect-packet-fix",
-        "whiteout",
+        // "whiteout",
         // "no-kebab",
         "dragon-movement-fix",
         "shieldstun",
@@ -312,9 +309,9 @@ export const minecraftRengokuService = new ContainerService(
         "ghast-direction",
         "attribute-swapping-fix",
         "elytraportalfix",
-        "thiocyanate",
+        // "thiocyanate",
         "always-shield",
-        // "packet-fixer",
+        "packet-fixer",
         "fence-gate-fix",
 
         // fun
@@ -363,7 +360,7 @@ export const minecraftRengokuService = new ContainerService(
         // "linkart-refabricated",
         "rail-destinations",
         // "audaki-cart-engine",
-        "express-carts",
+        "express-carts:nLatRTOc",
         "move-minecarts",
         "move-boats",
         "warping-wonders",
@@ -395,7 +392,8 @@ export const minecraftRengokuService = new ContainerService(
         "faewufs-diversity",
 
         // useful
-        "inventory-sorting",
+        // "inventory-sorting",
+        "sort-it-out", // replacement for inventory-sorting cuz it's broken on 1.21.11 (fixed for 26.1)
         "kleeslabs", // break only half of the slab you're looking at
         // "villager-death-messages",
 
@@ -421,6 +419,7 @@ export const minecraftRengokuService = new ContainerService(
         // "enhanced-groups",
         // "simple-voice-chat-group-msg",
         "audioplayer",
+        "sound-physics-remastered",
 
         // QoL
         "a-minor-convenience",
@@ -466,7 +465,8 @@ export const minecraftRengokuService = new ContainerService(
         // "saplanting",
         "ppetp",
         "rail-recipe-rebalance",
-        "command-feedback",
+        // "command-feedback", // no longer exists. replace with https://modrinth.com/mod/unjank/versions once available for 1.21.11
+        "remove-dialog-warning",
 
         // decorative/aesthetic
         // "boids",
@@ -489,11 +489,14 @@ export const minecraftRengokuService = new ContainerService(
         // "better-stats",
         "skinshuffle",
         "skinrestorer",
+        "xaeros-minimap",
+        "xaeros-world-map",
         "xaeros-map-server-utils",
         "do-a-barrel-roll",
         "wthit",
         "jade",
         "servux",
+        "polymer_patch_for_servux",
         "inventory-management",
         "inventory-essentials",
         "crafting-tweaks",

@@ -5,13 +5,18 @@ import { remote } from "@pulumi/command";
 import { asset, output } from "@pulumi/pulumi";
 import { getEnv } from "~lib/env";
 import { fetchRelays } from "~lib/relay-hosts";
+import { ContainerService, defaultConnection } from "~lib/service";
 import { confMount, ssdcacheMount } from "~lib/service/mounts";
-import { ContainerService, defaultConnection } from "~lib/service/service";
+import { toHostRule } from "~lib/util";
+
+const SUBDOMAINS = ["pds"];
+const HANDLE_DOMAINS = SUBDOMAINS.map((subdomain) => `${subdomain}.bas.sh`);
+const WILDCARD_HOSTS = HANDLE_DOMAINS.map((domain) => `*.${domain}`);
 
 export const pdsService = new ContainerService("pds", {
   image: "ghcr.io/bluesky-social/pds",
   servicePort: 3000,
-  hostRule: "HostRegexp(`^(.+\\.)?pds.bas.sh$`)",
+  hostRule: toHostRule([...HANDLE_DOMAINS, ...WILDCARD_HOSTS]),
   mounts: [confMount("pds", "/pds")],
   envs: {
     PDS_HOSTNAME: "pds.bas.sh",
@@ -33,25 +38,45 @@ export const pdsService = new ContainerService("pds", {
     PDS_EMAIL_FROM_ADDRESS: "PDS <pds@bas.sh>",
   },
   labels: {
-    "traefik.http.middlewares.pds-favicon.redirectregex.regex":
-      "^https://pds\\.bas\\.sh/favicon\\.ico$",
+    "traefik.http.routers.pds-user-redirect.entrypoints": "https",
+    "traefik.http.routers.pds-user-redirect.rule": `(${toHostRule(WILDCARD_HOSTS)}) && !PathPrefix(\`/.well-known\`)`,
+    "traefik.http.routers.pds-user-redirect.middlewares": "cloudflare,bsky-user-redirect",
+    "traefik.http.routers.pds-user-redirect.priority": 1000,
+
+    "traefik.http.middlewares.pds-favicon.redirectregex.regex": "^https://.+/favicon\\.ico$",
     "traefik.http.middlewares.pds-favicon.redirectregex.replacement":
       "https://tranquil.bas.sh/favicon.ico",
     "traefik.http.routers.pds-favicon.entrypoints": "https",
-    "traefik.http.routers.pds-favicon.rule": "Host(`pds.bas.sh`) && Path(`/favicon.ico`)",
+    "traefik.http.routers.pds-favicon.rule": `(${toHostRule(HANDLE_DOMAINS)}) && Path(\`/favicon.ico\`)`,
     "traefik.http.routers.pds-favicon.middlewares": "cloudflare,pds-favicon",
   },
 });
 
-const webMount = ssdcacheMount("web/pds", "/var/www");
+const PDS_MOTD = `
+           ⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⡀
+           ⠀⠀⠀⠀⠀⠀⠀⠀⠀⣾⠙⠻⢶⣄⡀⠀⠀⠀⢀⣤⠶⠛⠛⡇
+           ⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣇⠀⠀⣙⣿⣦⣤⣴⣿⣁⠀⠀⣸⠇
+           ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⣡⣾⣿⣿⣿⣿⣿⣿⣿⣷⣌⠋⠀
+           ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣴⣿⣷⣄⡈⢻⣿⡟⢁⣠⣾⣿⣦⠀
+           ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣿⣿⣿⣿⠘⣿⠃⣿⣿⣿⣿⡏⠀
+           ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠈⠛⣰⠿⣆⠛⠁⠀⡀⠀⠀
+           ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣼⣿⣦⠀⠘⠛⠋⠀⣴⣿⠁⠀⠀
+           ⠀⠀⠀⠀⠀⠀⣀⣤⣶⣾⣿⣿⣿⣿⡇⠀⠀⠀⢸⣿⣏⠀⠀⠀
+           ⠀⠀⠀⣠⣶⣿⣿⣿⣿⣿⣿⣿⣿⠿⠿⠀⠀⠀⠾⢿⣿⠀⠀⠀
+           ⠀⣠⣿⣿⣿⣿⣿⣿⡿⠟⠋⣁⣠⣤⣤⡶⠶⠶⣤⣄⠈⠀⠀⠀
+           ⢰⣿⣿⣮⣉⣉⣉⣤⣴⣶⣿⣿⣋⡥⠄⠀⠀⠀⠀⠉⢻⣄⠀⠀
+           ⠸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣟⣋⣁⣤⣀⣀⣤⣤⣤⣤⣄⣿⡄⠀
+           ⠀⠙⠿⣿⣿⣿⣿⣿⣿⣿⡿⠿⠛⠋⠉⠁⠀⠀⠀⠀⠈⠛⠃⠀
+           ⠀⠀⠀⠀⠉⠉⠉⠉⠉
 
-const MOTD_FILE_NAME = "motd.txt";
-const motdFile = new asset.FileAsset(path.join(import.meta.dirname, MOTD_FILE_NAME));
-const copyMotdFile = new remote.CopyToRemote("pds-motd", {
-  connection: defaultConnection,
-  source: motdFile,
-  remotePath: output(webMount.source).apply((dir) => path.join(dir, MOTD_FILE_NAME)),
-});
+This is an AT Protocol Personal Data Server (aka, an atproto PDS)
+
+Most API routes are under /xrpc/
+
+      Code: https://github.com/bluesky-social/atproto
+ Self-Host: https://github.com/bluesky-social/pds
+  Protocol: https://atproto.com
+`.slice(1);
 
 const CADDYFILE = `
   :80  {
@@ -60,8 +85,7 @@ const CADDYFILE = `
     }
 
     handle / {
-      try_files /${MOTD_FILE_NAME}
-      file_server
+      respond "${PDS_MOTD}" 200
     }
   }
 `;
@@ -72,8 +96,6 @@ export const pdsCaddyService = new ContainerService("pds-web", {
   hostRule: "Host(`pds.bas.sh`) && (Path(`/`) || Path(`/xrpc/app.bsky.ageassurance.getState`))",
   hostRulePriority: 1000,
   command: ["/bin/sh", "-c", `echo '${CADDYFILE}' | caddy run --config - --adapter caddyfile`],
-  mounts: [webMount],
-  workingDir: "/var/www",
   middlewares: ["cors"],
 });
 

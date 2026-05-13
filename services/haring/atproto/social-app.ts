@@ -1,4 +1,4 @@
-import { ContainerService } from "~lib/service/service";
+import { ContainerService } from "~lib/service";
 
 export const blueskyService = new ContainerService("bluesky", {
   image: "ghcr.io/brw/social-app",

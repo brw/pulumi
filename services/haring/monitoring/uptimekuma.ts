@@ -1,13 +1,11 @@
-import { getEnv } from "~lib/env";
+import { ContainerService } from "~lib/service";
 import { confMount, dockerSocket } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 export const uptimekumaService = new ContainerService("uptimekuma", {
   image: "louislam/uptime-kuma:2",
   servicePort: 3001,
   subdomain: "status",
-  mounts: [confMount("uptimekuma", "/app/data")],
-  middlewares: ["auth"],
+  mounts: [confMount("uptimekuma", "/app/data"), dockerSocket],
 });
 
 // export const autokumaService = new ContainerService("autokuma", {

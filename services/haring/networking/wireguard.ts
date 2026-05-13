@@ -1,5 +1,5 @@
+import { ContainerService } from "~lib/service";
 import { confMount, mount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 export const wireguardProtonService = new ContainerService("wireguard-proton", {
   image: "lscr.io/linuxserver/wireguard",

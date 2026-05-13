@@ -1,7 +1,7 @@
 import type { ContainerPort } from "@pulumi/docker/types/input";
 import { output, type UnwrappedObject } from "@pulumi/pulumi";
 
-import type { ContainerServiceArgs } from "./service";
+import type { ContainerServiceArgs } from ".";
 
 function parsePort(
   input: string | number | UnwrappedObject<ContainerPort>,

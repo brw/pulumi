@@ -1,5 +1,5 @@
+import { ContainerService } from "~lib/service";
 import { mount, confMount, dockerSocket } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 const beszelSocket = mount("/var/run/beszel_socket", "/beszel_socket");
 

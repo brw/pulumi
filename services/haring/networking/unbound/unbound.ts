@@ -3,9 +3,9 @@ import path from "path";
 
 import { remote } from "@pulumi/command";
 import { asset, ResourceHook } from "@pulumi/pulumi";
+import { ContainerService, defaultConnection } from "~lib/service";
 import { confMount } from "~lib/service/mounts";
 import { defaultNetwork } from "~lib/service/networks";
-import { ContainerService, defaultConnection } from "~lib/service/service";
 
 import { STATIC_IPS } from "../../ips";
 

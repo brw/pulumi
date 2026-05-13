@@ -1,6 +1,6 @@
 import { interpolate } from "@pulumi/pulumi";
+import { ContainerService } from "~lib/service";
 import { confMount, dataMount, gitMount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 import { wireguardProtonService } from "../networking/wireguard";
 

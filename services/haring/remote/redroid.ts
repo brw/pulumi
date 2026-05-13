@@ -1,5 +1,5 @@
+import { ContainerService } from "~lib/service";
 import { confMount, ssdcacheMount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 export const redroidService = new ContainerService("redroid", {
   image: "redroid/redroid:12.0.0_64only-latest",

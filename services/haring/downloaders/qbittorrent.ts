@@ -1,8 +1,8 @@
+import { ContainerService } from "~lib/service";
 import { confMount, dataMount, nvmeMount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 export const qbittorrentService = new ContainerService("qbittorrent", {
-  image: "lscr.io/linuxserver/qbittorrent:5.1.4",
+  image: "lscr.io/linuxserver/qbittorrent:5.2.3",
   servicePort: 8080,
   // ports: [1337, "1337/udp"],
   envs: {

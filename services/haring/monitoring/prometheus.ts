@@ -1,5 +1,5 @@
+import { ContainerService } from "~lib/service";
 import { confMount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 export const prometheusService = new ContainerService("prometheus", {
   image: "prom/prometheus",

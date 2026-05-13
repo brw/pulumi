@@ -6,10 +6,11 @@ type WithOptional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
 
 type CustomMountOpts = {
+  source?: Input<string>;
   kind?: Input<"directory" | "file">;
 };
 
-export type MountOpts = WithRequired<ContainerMount, "source"> & CustomMountOpts;
+export type MountOpts = Omit<ContainerMount, "source"> & WithRequired<CustomMountOpts, "source">;
 
 export function _mount({
   source,
@@ -86,11 +87,6 @@ export const dockerSocket = _mount({
   source: "/var/run/docker.sock",
   kind: "file",
   readOnly: true,
-});
-
-export const dockerSocketRw = _mount({
-  source: "/var/run/docker.sock",
-  kind: "file",
 });
 
 export const resolvConf = _mount({

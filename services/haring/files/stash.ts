@@ -1,5 +1,5 @@
+import { ContainerService } from "~lib/service";
 import { confMount, ssdcacheMount, gitMount, mount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 export const stashService = new ContainerService("stash", {
   image: "stashapp/stash",
@@ -10,6 +10,5 @@ export const stashService = new ContainerService("stash", {
     gitMount(),
     mount("/etc/localtime", "/etc/localtime", { readOnly: true }),
   ],
-  middlewares: ["auth"],
   cpuShares: 128,
 });

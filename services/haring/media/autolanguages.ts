@@ -1,5 +1,5 @@
 import { getEnv } from "~lib/env";
-import { ContainerService } from "~lib/service/service";
+import { ContainerService } from "~lib/service";
 
 import { plexService } from "./plex";
 

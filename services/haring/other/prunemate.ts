@@ -1,5 +1,5 @@
-import { confMount, dockerSocketRw } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
+import { ContainerService } from "~lib/service";
+import { confMount, dockerSocket } from "~lib/service/mounts";
 
 export const prunemateService = new ContainerService("prunemate", {
   image: "anoniemerd/prunemate",
@@ -7,7 +7,7 @@ export const prunemateService = new ContainerService("prunemate", {
   mounts: [
     confMount("prunemate/logs", "/var/log"),
     confMount("prunemate/config", "/config"),
-    dockerSocketRw,
+    dockerSocket,
   ],
   envs: {
     PRUNEMATE_TZ: "Europe/Amsterdam",

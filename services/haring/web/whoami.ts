@@ -1,4 +1,4 @@
-import { ContainerService } from "~lib/service/service";
+import { ContainerService } from "~lib/service";
 
 export const whoamiService = new ContainerService("whoami", {
   image: "ghcr.io/traefik/whoami",

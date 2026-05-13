@@ -1,5 +1,5 @@
+import { ContainerService } from "~lib/service";
 import { confMount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 export const pixivPublicToPrivateService = new ContainerService("pixiv-public-to-private", {
   image: "ghcr.io/tomacheese/pixiv-public-to-private",

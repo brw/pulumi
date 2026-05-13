@@ -1,6 +1,6 @@
 import { getEnv } from "~lib/env";
+import { ContainerService } from "~lib/service";
 import { nvmeMount, ssdcacheMount, mount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 const minecraftTeenaService = new ContainerService(
   "minecraft-teena",

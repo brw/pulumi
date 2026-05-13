@@ -1,5 +1,5 @@
+import { ContainerService } from "~lib/service";
 import { confMount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 export const dashbrrService = new ContainerService("dashbrr", {
   image: "ghcr.io/autobrr/dashbrr",

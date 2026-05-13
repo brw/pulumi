@@ -1,6 +1,6 @@
 import { getEnv } from "~lib/env";
+import { ContainerService } from "~lib/service";
 import { ssdcacheMount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 const SUBDOMAINS = ["get", "static", "files", "f", "i"];
 
@@ -10,12 +10,14 @@ const CADDYFILE = `
     }
     header X-Robots-Tag "noindex"
     basic_auth /plex/* {
-      ${getEnv("CADDY_USERNAME")} ${Buffer.from(getEnv("CADDY_PASSWORD")).toString("base64")}
+      ${getEnv("CADDY_USERNAME_1")} ${getEnv("CADDY_PASSWORD_1")}
+      ${getEnv("CADDY_USERNAME_2")} ${getEnv("CADDY_PASSWORD_2")}
+      ${getEnv("CADDY_USERNAME_3")} ${getEnv("CADDY_PASSWORD_3")}
     }
   }
 `;
 
-export const caddyFileserverService = new ContainerService(`caddy-fileserver`, {
+export const caddyFileserverService = new ContainerService("caddy-fileserver", {
   image: "caddy",
   servicePort: 80,
   hostRule: SUBDOMAINS.map((sub) => `Host(\`${sub}.bas.sh\`)`).join(" || "),

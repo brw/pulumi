@@ -1,6 +1,6 @@
 import { getEnv } from "~lib/env";
+import { ContainerService } from "~lib/service";
 import { confMount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 export const spottarrService = new ContainerService("spottarr", {
   image: "ghcr.io/spottarr/spottarr",

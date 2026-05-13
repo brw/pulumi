@@ -1,7 +1,7 @@
 import { interpolate } from "@pulumi/pulumi";
 import { getEnv } from "~lib/env";
+import { ContainerService } from "~lib/service";
 import { confMount, ssdcacheMount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 const valkeyNextcloudService = new ContainerService("valkey-nextcloud", {
   image: "valkey/valkey",

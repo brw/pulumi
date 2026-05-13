@@ -1,5 +1,5 @@
+import { ContainerService } from "~lib/service";
 import { confMount, mount, dockerSocket } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 export const netdataService = new ContainerService("netdata", {
   image: "netdata/netdata",
@@ -20,6 +20,6 @@ export const netdataService = new ContainerService("netdata", {
     dockerSocket,
   ],
   capabilities: ["SYS_PTRACE", "SYS_ADMIN"],
-  securityOpts: ["apparmor:unconfined"],
+  securityOpts: ["apparmor=unconfined"],
   networkMode: "host",
 });

@@ -1,7 +1,7 @@
 import { DnsRecord } from "@pulumi/cloudflare";
 import { getEnv } from "~lib/env";
+import { ContainerService } from "~lib/service";
 import { confMount, dataMount, nvmeMount } from "~lib/service/mounts";
-import { ContainerService } from "~lib/service/service";
 
 export const quiService = new ContainerService("qui", {
   image: "ghcr.io/autobrr/qui",

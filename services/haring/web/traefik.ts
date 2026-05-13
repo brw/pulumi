@@ -1,8 +1,8 @@
 import { Volume } from "@pulumi/docker";
 import { getEnv } from "~lib/env";
+import { ContainerService } from "~lib/service";
 import { dockerSocket } from "~lib/service/mounts";
 import { haringDockerProvider } from "~lib/service/providers";
-import { ContainerService } from "~lib/service/service";
 
 import { SECRET_ARGS, SECRET_LABELS } from "./traefik-secrets";
 
@@ -58,8 +58,6 @@ export const traefikService = new ContainerService(
       "--entrypoints.https.http.tls.domains[0].sans=*.bas.sh,*.tranquil.bas.sh,*.pegasus.bas.sh,*.on.bas.sh,*.t.bas.sh,*.of.bas.sh,*.pds.bas.sh",
       "--entrypoints.https.http.tls.domains[1].main=danimutiara.nl",
       "--entrypoints.https.http.tls.domains[1].sans=*.danimutiara.nl",
-      "--entrypoints.https.http.tls.domains[2].main=vod.watch",
-      "--entrypoints.https.http.tls.domains[2].sans=*.vod.watch",
 
       "--certificatesresolvers.cloudflare.acme.dnschallenge=true",
       "--certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare",
@@ -88,6 +86,9 @@ export const traefikService = new ContainerService(
       ...SECRET_ARGS,
     ],
     labels: {
+      "traefik.http.routers.traefik.service": "api@internal",
+      "traefik.http.routers.traefik.middlewares": "cloudflare,auth",
+
       "traefik.http.middlewares.httpsredirect.redirectscheme.scheme": "https",
       "traefik.http.middlewares.httpsredirect.redirectscheme.permanent": "true",
       "traefik.http.routers.httpsredirect.rule": "HostRegexp(`.+`)",
@@ -116,6 +117,11 @@ export const traefikService = new ContainerService(
       "traefik.http.routers.atproto-did.entrypoints": "https",
       "traefik.http.routers.atproto-did.middlewares": "cloudflare,cors,atproto-did",
 
+      "traefik.http.middlewares.bsky-user-redirect.redirectregex.regex":
+        "^https://(.+?)(?:/|(/.+))$",
+      "traefik.http.middlewares.bsky-user-redirect.redirectregex.replacement":
+        "https://bsky.app/profile/${1}${2}",
+
       "traefik.http.middlewares.vod.plugin.staticresponse.statuscode": "200",
       "traefik.http.middlewares.vod.plugin.staticresponse.body": "poggers",
       "traefik.http.routers.vod.rule": "Host(`vod.watch`)",
@@ -123,9 +129,6 @@ export const traefikService = new ContainerService(
       "traefik.http.routers.vod.middlewares": "cloudflare,vod",
 
       "traefik.http.middlewares.relay.headers.customrequestheaders.Origin": "",
-
-      "traefik.http.routers.traefik-bas-sh.service": "api@internal",
-      "traefik.http.routers.traefik-bas-sh.middlewares": "cloudflare,auth",
 
       "traefik.http.routers.metrics.service": "prometheus@internal",
       "traefik.http.routers.metrics.rule": "Host(`metrics.bas.sh`)",

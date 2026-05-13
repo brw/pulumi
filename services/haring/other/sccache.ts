@@ -3,8 +3,8 @@ import path from "path";
 import { Image } from "@pulumi/docker-build";
 import { interpolate } from "@pulumi/pulumi";
 import { getEnv } from "~lib/env";
+import { ContainerService } from "~lib/service";
 import { defaultNetwork } from "~lib/service/networks";
-import { ContainerService } from "~lib/service/service";
 import { getLatestGithubTag } from "~lib/util";
 
 import { STATIC_IPS } from "../ips";
