@@ -17,9 +17,8 @@ export const ncpsMigrateDbService = new ContainerService("ncps-migratedb", {
 export const ncpsService = new ContainerService(
   "ncps",
   {
-    image: "ghcr.io/kalbasit/ncps:sha-ed423d6",
-    servicePort: 8501,
-    subdomain: "cache",
+    image: "ghcr.io/kalbasit/ncps:main",
+    ports: ["127.0.0.1:8501:8501"],
     mounts: [confMount("ncps", "/storage")],
     entrypoints: [
       "/bin/ncps",
